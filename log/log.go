@@ -58,17 +58,17 @@ func _Colorize(text string) string {
 
 func Dbg(str string) {
 	if Level == DebugLevel || Level == InfoLevel {
-		fmt.Println(_Colorize(str))
+		fmt.Println(_Colorize("<d>[DEBUG]</> " + str))
 	}
 }
 
 func Info(str string) {
 	if Level == InfoLevel {
-		fmt.Println(_Colorize(str))
+		fmt.Println(_Colorize("<i>[INFO]</> " + str))
 	}
 }
 
 func Err(str string, err error) {
-	fmt.Println(_Colorize(str))
+	fmt.Println(_Colorize("<e>[ERROR]</> " + str))
 	fmt.Printf("%sError:%s %v\n", ErrorColor, ResetColor, err)
 }
