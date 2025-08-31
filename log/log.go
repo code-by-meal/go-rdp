@@ -56,19 +56,63 @@ func _Colorize(text string) string {
 	return text
 }
 
-func Dbg(str string) {
+func _ProccessArgs(prefix string, argn ...any) {
+	var args []any
+	args = append(args, argn...)
+
+	fmt.Print(_Colorize(prefix + " "))
+
+	for _, arg := range args {
+		switch v := arg.(type) {
+		case string:
+			fmt.Print(_Colorize(v))
+		case []byte:
+			fmt.Print(_Colorize(fmt.Sprintf("[<d>LENGTH:</> <i>%d</>] ", len(v))))
+
+			for i, b := range v {
+				start := "<d>"
+				if i%2 == 0 {
+					start = "<i>"
+				}
+
+				fmt.Print(_Colorize(start + fmt.Sprintf("%02d ", b) + "</>"))
+			}
+		case error:
+		default:
+			fmt.Println(_Colorize("<e>[UNKNOWN LOG TYPE]</>"), v)
+		}
+	}
+
+	fmt.Print("\n")
+}
+
+func Dbg(arg1 any, argn ...any) {
 	if Level == DebugLevel || Level == InfoLevel {
-		fmt.Println(_Colorize("<d>[DEBUG]</> " + str))
+		prefix := "<d>[DEBUG]</>"
+		var args []any
+		args = append(args, arg1)
+		args = append(args, argn...)
+
+		_ProccessArgs(prefix, args...)
 	}
 }
 
-func Info(str string) {
+func Info(arg1 any, argn ...any) {
 	if Level == InfoLevel {
-		fmt.Println(_Colorize("<i>[INFO]</> " + str))
+		prefix := "<i>[INFO]</>"
+		var args []any
+		args = append(args, arg1)
+		args = append(args, argn...)
+
+		_ProccessArgs(prefix, args...)
 	}
 }
 
-func Err(str string, err error) {
-	fmt.Println(_Colorize("<e>[ERROR]</> " + str))
-	fmt.Printf("%sError:%s %v\n", ErrorColor, ResetColor, err)
+func Err(arg1 any, argn ...any) {
+	prefix := "<e>[ERROR]</> "
+	var args []any
+	args = append(args, arg1)
+	args = append(args, argn...)
+
+	_ProccessArgs(prefix, args...)
 }
