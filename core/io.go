@@ -12,7 +12,7 @@ import (
 type Tag string
 
 const (
-	OrderTag Tag = "o"
+	OrderTag Tag = "order"
 )
 
 // Serializing of any structures to slice of bytes
@@ -74,6 +74,10 @@ func Serialize(obj any) ([]byte, error) {
 				order.PutUint64(tmp, fieldV.Uint())
 
 				if _, err := buff.Write(tmp); err != nil {
+					return buff.Bytes(), err
+				}
+			case reflect.String:
+				if _, err := buff.Write([]byte(v.String() + "\n\r")); err != nil {
 					return buff.Bytes(), err
 				}
 			default:

@@ -1,13 +1,12 @@
 package main
 
 import (
-	"bytes"
 	"context"
 	"time"
 
 	"github.com/code-by-meal/go-rdp/core"
 	"github.com/code-by-meal/go-rdp/log"
-	"github.com/code-by-meal/go-rdp/stack/x224"
+	"github.com/code-by-meal/go-rdp/stack/pdu/conn"
 )
 
 func main() {
@@ -17,6 +16,8 @@ func main() {
 	host := "172.16.0.19"
 	port := uint16(3389)
 	ctx := context.Background()
+	username := "user"
+	//password := "user"
 	stream, err := core.NewStream(host, port, 5*time.Second, ctx)
 
 	if err != nil {
@@ -25,11 +26,8 @@ func main() {
 		return
 	}
 
-	data := []byte("Hello wrld!")
-	buff := bytes.NewBuffer(data)
-
-	//test X224
-	if err := x224.Write(stream, buff, x224.ConnectionRequestPDU); err != nil {
+	cr := conn.NewConnectionRequest(username)
+	if err := cr.Write(stream); err != nil {
 		log.Err(err)
 	}
 }
