@@ -31,9 +31,16 @@ func Write(stream io.Writer, buff *bytes.Buffer) error {
 
 	log.Dbg("<i>[TPKT-WRITE]</> ", tpktPacket)
 
+	if _, err := stream.Write(tpktPacket); err != nil {
+		return fmt.Errorf("tpkt: write buff: %v", err)
+	}
+
 	return nil
 }
 
-func Read() {
+func Read(stream io.Writer) (*bytes.Buffer, error) {
+	buff := new(bytes.Buffer)
+
+	return buff, nil
 
 }

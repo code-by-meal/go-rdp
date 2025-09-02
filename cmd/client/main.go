@@ -14,7 +14,7 @@ func init() {
 func main() {
 	log.Info("<s>[+]</> Start <s>RDP</> client (by <s>code-by-meal</>)")
 
-	host := "192.168.64.3"
+	host := "172.16.0.19"
 	port := uint16(3389) // 3389 - default service MS-RDP port
 	ctx := context.Background()
 	domain := ""

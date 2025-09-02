@@ -78,6 +78,7 @@ func _ProccessArgs(prefix string, argn ...any) {
 				fmt.Print(_Colorize(start + fmt.Sprintf("%02d ", b) + "</>"))
 			}
 		case error:
+			fmt.Print(_Colorize(fmt.Sprintf("<e>Error:</> %v", v)))
 		default:
 			fmt.Println(_Colorize("<e>[UNKNOWN LOG TYPE]</>"), v)
 		}

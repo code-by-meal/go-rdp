@@ -7,13 +7,14 @@ import (
 
 	"github.com/code-by-meal/go-rdp/core"
 	"github.com/code-by-meal/go-rdp/log"
-	"github.com/code-by-meal/go-rdp/stack/tpkt"
+	"github.com/code-by-meal/go-rdp/stack/x224"
 )
 
 func main() {
 	log.Dbg("<s>[TEST]</> TPKT")
 
-	host := "192.168.64.3"
+	//host := "192.168.64.3"
+	host := "172.16.0.19"
 	port := uint16(3389)
 	ctx := context.Background()
 	stream, err := core.NewStream(host, port, 5*time.Second, ctx)
@@ -27,5 +28,8 @@ func main() {
 	data := []byte("Hello wrld!")
 	buff := bytes.NewBuffer(data)
 
-	tpkt.Write(stream, buff)
+	//test X224
+	if err := x224.Write(stream, buff, x224.ConnectionRequestPDU); err != nil {
+		log.Err(err)
+	}
 }
