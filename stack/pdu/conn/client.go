@@ -30,29 +30,35 @@ const (
 	ProtocolRDSAAD         NegotiationResult = 0x00000010
 )
 
-type ConnectionRequest struct {
-	Cookie             string
+type Nego struct {
 	Type               uint8  `order:"l"`
 	Flags              uint8  `order:"l"`
 	Length             uint16 `order:"l"`
 	RequestedProtocols uint32 `order:"l"`
 }
 
-func NewConnectionRequest(username string) *ConnectionRequest {
-	return &ConnectionRequest{
-		Cookie:             fmt.Sprintf("Cookie: msthash=%s\r\n", username),
-		Type:               uint8(NegotiationRequest),
-		Flags:              0,
-		Length:             8,
-		RequestedProtocols: uint32(ProtocolTLS) | uint32(ProtocolHybrid) | uint32(ProtocolRDP),
+type NegoRequest struct {
+	Cookie string
+	Nego
+}
+
+func NewNegoRequest(username string) *NegoRequest {
+	return &NegoRequest{
+		Cookie: fmt.Sprintf("Cookie: msthash=%s\r\n", username),
+		Nego: Nego{
+			Type:               uint8(NegotiationRequest),
+			Flags:              0,
+			Length:             8,
+			RequestedProtocols: uint32(ProtocolTLS) | uint32(ProtocolHybrid) | uint32(ProtocolRDP),
+		},
 	}
 }
 
-func (c *ConnectionRequest) Write(stream io.Writer) error {
+func (c *NegoRequest) Write(stream io.Writer) error {
 	packet, err := core.Serialize(c)
 
 	if err != nil {
-		return fmt.Errorf("pdu connection-request: %v", err)
+		return fmt.Errorf("nego req: %v", err)
 	}
 
 	log.Dbg("<i>[PDU-WRITE]</> ", packet)
@@ -60,7 +66,7 @@ func (c *ConnectionRequest) Write(stream io.Writer) error {
 	buff := bytes.NewBuffer(packet)
 
 	if err := x224.Write(stream, buff, x224.ConnectionRequestPDU); err != nil {
-		return fmt.Errorf("pdu connection-request: %v", err)
+		return fmt.Errorf("nego req: %v", err)
 	}
 
 	return nil

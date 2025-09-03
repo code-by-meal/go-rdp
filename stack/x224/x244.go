@@ -49,6 +49,7 @@ func Write(stream io.Writer, data *bytes.Buffer, pdu TypePDU) error {
 		}
 		x224Header.Length = uint8(data.Len() + 6)
 	case DataPDU:
+		log.Err(fmt.Errorf("x224 data pdu not implemented!"))
 	default:
 		log.Err(fmt.Sprintf("<e>x224</>: unproccessed pdu type <i>%d</>", pdu))
 	}
@@ -104,6 +105,8 @@ func Read(stream io.Reader) (*bytes.Buffer, error) {
 		if buff.Len() <= 3 || (x224Header.Length != 2 && x224Header.DestinationReference != 0x80) {
 			return buff, fmt.Errorf("x224: invalid header")
 		}
+
+		log.Err(fmt.Errorf("x224 data pdu not implemented!"))
 	default:
 	}
 

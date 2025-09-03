@@ -80,12 +80,22 @@ func Serialize(obj any) ([]byte, error) {
 				if _, err := buff.Write([]byte(fieldV.String())); err != nil {
 					return buff.Bytes(), err
 				}
+			case reflect.Struct:
+				strcBytes, err := Serialize(fieldV.Interface())
+
+				if err != nil {
+					return buff.Bytes(), err
+				}
+
+				if _, err := buff.Write(strcBytes); err != nil {
+					return buff.Bytes(), err
+				}
 			default:
 				log.Dbg("Try serialize <e>unexpected</> type..")
 			}
 		}
 	default:
-		log.Dbg("Try to <d>se</>rialize reflect type <e>non structure</>.")
+		log.Dbg("Trying to <d>se</>rialize reflect type <e>non structure</>.")
 	}
 
 	return buff.Bytes(), nil

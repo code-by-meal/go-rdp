@@ -92,6 +92,18 @@ func _ProccessArgs(prefix string, argn ...any) {
 	fmt.Print("\n")
 }
 
+func Zebra(text string, color COLOR) {
+	for i, s := range []byte(text) {
+		if i%2 == 0 {
+			fmt.Print(string(color) + string(s) + string(ResetColor))
+		} else {
+			fmt.Print(string(s))
+		}
+	}
+
+	fmt.Print("\n")
+}
+
 func Dbg(arg1 any, argn ...any) {
 	if Level == DebugLevel || Level == InfoLevel {
 		prefix := "<d>[DEBUG]</>"

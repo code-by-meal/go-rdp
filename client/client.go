@@ -51,5 +51,9 @@ func (c *Client) Login(
 
 	c.Stream = stream
 
+	if err := c._Negotiation(); err != nil {
+		return fmt.Errorf("nego: %v", err)
+	}
+
 	return nil
 }
