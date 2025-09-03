@@ -10,57 +10,14 @@ import (
 	"github.com/code-by-meal/go-rdp/stack/x224"
 )
 
-type NegotiationType uint8
-
-const (
-	NegotiationRequest  NegotiationType = 0x01
-	NegotiationResponse NegotiationType = 0x02
-	NegotiationFailure  NegotiationType = 0x03
-)
-
-type NegotiationResult uint32
-
-// Negotiation Result
-const (
-	ProtocolRDP            NegotiationResult = 0x00000000 //Standard RDP Security
-	ProtocolTLS            NegotiationResult = 0x00000001 //TLS1.0/1.1/1.2
-	ProtocolHybrid         NegotiationResult = 0x00000002 //CredSSP
-	ProtocolRDSTLS         NegotiationResult = 0x00000004
-	ProtocolHybridExtended NegotiationResult = 0x00000008
-	ProtocolRDSAAD         NegotiationResult = 0x00000010
-)
-
-var (
-	Protocols = map[NegotiationResult]string{
-		ProtocolRDP:            "RDP",
-		ProtocolTLS:            "TLS/SSL",
-		ProtocolHybrid:         "Hybrid",
-		ProtocolRDSTLS:         "RDSTLS",
-		ProtocolHybridExtended: "Hybrid Extended",
-		ProtocolRDSAAD:         "RDSAAD",
-	}
-)
-
-type Nego struct {
-	Type               uint8             `order:"l"`
-	Flags              uint8             `order:"l"`
-	Length             uint16            `order:"l"`
-	RequestedProtocols NegotiationResult `order:"l"`
-}
-
-type NegoRequest struct {
-	Cookie string
-	Nego
-}
-
-func NewNegoRequest(username string) *NegoRequest {
+func NewNegoRequest(username string, protocol NegoProtocol) *NegoRequest {
 	return &NegoRequest{
 		Cookie: fmt.Sprintf("Cookie: msthash=%s\r\n", username),
 		Nego: Nego{
-			Type:               uint8(NegotiationRequest),
+			Type:               Request,
 			Flags:              0,
 			Length:             8,
-			RequestedProtocols: ProtocolTLS | ProtocolHybrid | ProtocolRDP,
+			RequestedProtocols: protocol,
 		},
 	}
 }
