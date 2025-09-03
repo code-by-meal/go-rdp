@@ -77,7 +77,7 @@ func Serialize(obj any) ([]byte, error) {
 					return buff.Bytes(), err
 				}
 			case reflect.String:
-				if _, err := buff.Write([]byte(v.String() + "\n\r")); err != nil {
+				if _, err := buff.Write([]byte(fieldV.String() + "\r\n")); err != nil {
 					return buff.Bytes(), err
 				}
 			default:

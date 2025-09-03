@@ -12,8 +12,8 @@ import (
 func main() {
 	log.Dbg("<s>[TEST]</> TPKT")
 
-	//host := "192.168.64.3"
-	host := "172.16.0.19"
+	host := "192.168.64.3"
+	//host := "172.16.0.19"
 	port := uint16(3389)
 	ctx := context.Background()
 	username := "user"
