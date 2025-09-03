@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"unsafe"
 
 	"github.com/code-by-meal/go-rdp/core"
 	"github.com/code-by-meal/go-rdp/log"
@@ -24,11 +25,12 @@ func Write(stream io.Writer, buff *bytes.Buffer) error {
 	tpktPacket, err := core.Serialize(tpktHeader)
 
 	if err != nil {
-		return fmt.Errorf("tpkt: write bytes %w", err)
+		return fmt.Errorf("tpkt: serialize bytes %v", err)
 	}
 
 	tpktPacket = append(tpktPacket, buff.Bytes()...)
 
+	log.Dbg(tpktHeader)
 	log.Dbg("<i>[TPKT-WRITE]</> ", tpktPacket)
 
 	if _, err := stream.Write(tpktPacket); err != nil {
@@ -38,9 +40,35 @@ func Write(stream io.Writer, buff *bytes.Buffer) error {
 	return nil
 }
 
-func Read(stream io.Writer) (*bytes.Buffer, error) {
+func Read(stream io.Reader) (*bytes.Buffer, error) {
+	var tpktHeader Header
 	buff := new(bytes.Buffer)
+	tpktPacket, err := core.ReadFull(stream, int(unsafe.Sizeof(tpktHeader)))
+
+	if err != nil {
+		return buff, fmt.Errorf("tpkt: read full: %v", err)
+	}
+
+	if err := core.Unserialize(bytes.NewBuffer(tpktPacket), &tpktHeader); err != nil {
+		return buff, fmt.Errorf("tpkt: unserialize: %v", err)
+	}
+
+	if tpktHeader.Version != 3 || tpktHeader.Length <= 4 {
+		return buff, fmt.Errorf("tpkt: invalid packet versin: %d length: %d", tpktHeader.Version, tpktHeader.Length)
+	}
+
+	tpktData, err := core.ReadFull(stream, int(tpktHeader.Length-uint16(unsafe.Sizeof(tpktHeader))))
+
+	if err != nil {
+		return buff, nil
+	}
+
+	if _, err := buff.Write(tpktData); err != nil {
+		return buff, nil
+	}
+
+	log.Dbg(tpktHeader)
+	log.Dbg("<i>[TPKT-READ]</> ", buff.Bytes())
 
 	return buff, nil
-
 }

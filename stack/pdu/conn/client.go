@@ -31,7 +31,7 @@ const (
 )
 
 type ConnectionRequest struct {
-	Cookie             string `order:"l"`
+	Cookie             string
 	Type               uint8  `order:"l"`
 	Flags              uint8  `order:"l"`
 	Length             uint16 `order:"l"`
@@ -40,7 +40,7 @@ type ConnectionRequest struct {
 
 func NewConnectionRequest(username string) *ConnectionRequest {
 	return &ConnectionRequest{
-		Cookie:             fmt.Sprintf("Cookie: msthash=%s", username),
+		Cookie:             fmt.Sprintf("Cookie: msthash=%s\r\n", username),
 		Type:               uint8(NegotiationRequest),
 		Flags:              0,
 		Length:             8,

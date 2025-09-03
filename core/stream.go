@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
+	"io"
 	"net"
 	"time"
 )
@@ -54,4 +55,14 @@ func (s *Stream) Read(d []byte) (int, error) {
 
 func (s *Stream) Write(d []byte) (int, error) {
 	return s.Conn.Write(d)
+}
+
+func ReadFull(stream io.Reader, length int) ([]byte, error) {
+	buff := make([]byte, length)
+
+	if _, err := io.ReadFull(stream, buff); err != nil {
+		return buff, fmt.Errorf("stream: read full: %v", err)
+	}
+
+	return buff, nil
 }

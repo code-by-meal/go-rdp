@@ -77,7 +77,7 @@ func Serialize(obj any) ([]byte, error) {
 					return buff.Bytes(), err
 				}
 			case reflect.String:
-				if _, err := buff.Write([]byte(fieldV.String() + "\r\n")); err != nil {
+				if _, err := buff.Write([]byte(fieldV.String())); err != nil {
 					return buff.Bytes(), err
 				}
 			default:
@@ -117,7 +117,6 @@ func Unserialize(buff *bytes.Buffer, dst any) error {
 
 		// tags proccessing
 		order := _GetOrder(fieldT)
-		log.Dbg(fmt.Sprintf("order: %v", order))
 
 		if fieldV.Kind() == reflect.Pointer {
 			fieldV = fieldV.Elem()
@@ -156,6 +155,9 @@ func Unserialize(buff *bytes.Buffer, dst any) error {
 			}
 
 			fieldV.SetUint(order.Uint64(tmp[:]))
+		case reflect.String:
+			// implement
+
 		default:
 			log.Dbg("Try to <d>UN</>serialize reflect type <e>non structure</>.")
 		}

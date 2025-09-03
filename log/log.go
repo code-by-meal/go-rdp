@@ -77,8 +77,13 @@ func _ProccessArgs(prefix string, argn ...any) {
 
 				fmt.Print(_Colorize(start + fmt.Sprintf("%02d ", b) + "</>"))
 			}
+		case byte:
+			fmt.Print(_Colorize(fmt.Sprintf("<d>BYTE:</> <i>%d</>", v)))
 		case error:
 			fmt.Print(_Colorize(fmt.Sprintf("<e>Error:</> %v", v)))
+		// case tpkt.Header:
+		// 	fmt.Print(_Colorize(fmt.Sprintf("<i>[TPKT-HEADER]</> Version: <d>%d</>\tReserved: <d>%d</>\tLength: <d>%d</>", v.Version, v.Reserved, v.Length)))
+		// case x224.Header:
 		default:
 			fmt.Println(_Colorize("<e>[UNKNOWN LOG TYPE]</>"), v)
 		}
