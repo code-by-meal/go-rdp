@@ -30,11 +30,22 @@ const (
 	ProtocolRDSAAD         NegotiationResult = 0x00000010
 )
 
+var (
+	Protocols = map[NegotiationResult]string{
+		ProtocolRDP:            "RDP",
+		ProtocolTLS:            "TLS/SSL",
+		ProtocolHybrid:         "Hybrid",
+		ProtocolRDSTLS:         "RDSTLS",
+		ProtocolHybridExtended: "Hybrid Extended",
+		ProtocolRDSAAD:         "RDSAAD",
+	}
+)
+
 type Nego struct {
-	Type               uint8  `order:"l"`
-	Flags              uint8  `order:"l"`
-	Length             uint16 `order:"l"`
-	RequestedProtocols uint32 `order:"l"`
+	Type               uint8             `order:"l"`
+	Flags              uint8             `order:"l"`
+	Length             uint16            `order:"l"`
+	RequestedProtocols NegotiationResult `order:"l"`
 }
 
 type NegoRequest struct {
@@ -49,7 +60,7 @@ func NewNegoRequest(username string) *NegoRequest {
 			Type:               uint8(NegotiationRequest),
 			Flags:              0,
 			Length:             8,
-			RequestedProtocols: uint32(ProtocolTLS) | uint32(ProtocolHybrid) | uint32(ProtocolRDP),
+			RequestedProtocols: ProtocolTLS | ProtocolHybrid | ProtocolRDP,
 		},
 	}
 }

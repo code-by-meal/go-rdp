@@ -1,6 +1,5 @@
 # Go-RDP
 
-Start project....
 
 # TODO Authorization
 

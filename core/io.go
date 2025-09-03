@@ -167,7 +167,14 @@ func Unserialize(buff *bytes.Buffer, dst any) error {
 			fieldV.SetUint(order.Uint64(tmp[:]))
 		case reflect.String:
 			// implement
+		case reflect.Struct:
+			deepPtr := reflect.New(fieldV.Type())
 
+			if err := Unserialize(buff, deepPtr.Interface()); err != nil {
+				return err
+			}
+
+			fieldV.Set(deepPtr.Elem())
 		default:
 			log.Dbg("Try to <d>UN</>serialize reflect type <e>non structure</>.")
 		}
