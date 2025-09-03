@@ -7,7 +7,7 @@ import (
 	"github.com/code-by-meal/go-rdp/core"
 	"github.com/code-by-meal/go-rdp/log"
 	"github.com/code-by-meal/go-rdp/stack/pdu/conn"
-	"github.com/code-by-meal/go-rdp/stack/tpkt"
+	"github.com/code-by-meal/go-rdp/stack/x224"
 )
 
 func main() {
@@ -31,14 +31,18 @@ func main() {
 	cr := conn.NewConnectionRequest(username)
 	if err := cr.Write(stream); err != nil {
 		log.Err(err)
+
+		return
 	}
 
 	// confirm responsi
-	d, err := tpkt.Read(stream)
+	buff, err := x224.Read(stream)
 
 	if err != nil {
 		log.Err(err)
+
+		return
 	}
 
-	_ = d
+	_ = buff
 }

@@ -85,7 +85,7 @@ func _ProccessArgs(prefix string, argn ...any) {
 		// 	fmt.Print(_Colorize(fmt.Sprintf("<i>[TPKT-HEADER]</> Version: <d>%d</>\tReserved: <d>%d</>\tLength: <d>%d</>", v.Version, v.Reserved, v.Length)))
 		// case x224.Header:
 		default:
-			fmt.Println(_Colorize("<e>[UNKNOWN LOG TYPE]</>"), v)
+			fmt.Print(_Colorize("<e>[UNKNOWN LOG TYPE]</>"), v)
 		}
 	}
 

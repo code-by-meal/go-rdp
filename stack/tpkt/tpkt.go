@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"unsafe"
 
 	"github.com/code-by-meal/go-rdp/core"
 	"github.com/code-by-meal/go-rdp/log"
@@ -15,6 +14,10 @@ type Header struct {
 	Reserved uint8
 	Length   uint16
 }
+
+var (
+	HeaderLength = 4
+)
 
 func Write(stream io.Writer, buff *bytes.Buffer) error {
 	tpktHeader := Header{
@@ -30,7 +33,7 @@ func Write(stream io.Writer, buff *bytes.Buffer) error {
 
 	tpktPacket = append(tpktPacket, buff.Bytes()...)
 
-	log.Dbg(tpktHeader)
+	log.Dbg("<i>[TPKT-HEADER]</> ", tpktHeader)
 	log.Dbg("<i>[TPKT-WRITE]</> ", tpktPacket)
 
 	if _, err := stream.Write(tpktPacket); err != nil {
@@ -43,7 +46,7 @@ func Write(stream io.Writer, buff *bytes.Buffer) error {
 func Read(stream io.Reader) (*bytes.Buffer, error) {
 	var tpktHeader Header
 	buff := new(bytes.Buffer)
-	tpktPacket, err := core.ReadFull(stream, int(unsafe.Sizeof(tpktHeader)))
+	tpktPacket, err := core.ReadFull(stream, HeaderLength)
 
 	if err != nil {
 		return buff, fmt.Errorf("tpkt: read full: %v", err)
@@ -57,7 +60,7 @@ func Read(stream io.Reader) (*bytes.Buffer, error) {
 		return buff, fmt.Errorf("tpkt: invalid packet versin: %d length: %d", tpktHeader.Version, tpktHeader.Length)
 	}
 
-	tpktData, err := core.ReadFull(stream, int(tpktHeader.Length-uint16(unsafe.Sizeof(tpktHeader))))
+	tpktData, err := core.ReadFull(stream, int(tpktHeader.Length)-HeaderLength)
 
 	if err != nil {
 		return buff, nil
@@ -67,7 +70,7 @@ func Read(stream io.Reader) (*bytes.Buffer, error) {
 		return buff, nil
 	}
 
-	log.Dbg(tpktHeader)
+	log.Dbg("<i>[TPKT-HEADER]</> ", tpktHeader)
 	log.Dbg("<i>[TPKT-READ]</> ", buff.Bytes())
 
 	return buff, nil
