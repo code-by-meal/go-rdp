@@ -20,7 +20,7 @@ type Client struct {
 	Timeout  time.Duration
 }
 
-func NewClient(host string, port uint16, ctx context.Context) *Client {
+func NewClient(ctx context.Context, host string, port uint16) *Client {
 	log.Dbg("Init <d>rdp-client</>.")
 
 	return &Client{
@@ -43,7 +43,7 @@ func (c *Client) Login(
 	c.Timeout = 5 * time.Second
 
 	// Init tcp stream
-	stream, err := core.NewStream(c.Host, c.Port, c.Timeout, c.Context)
+	stream, err := core.NewStream(c.Context, c.Host, c.Port, c.Timeout)
 
 	if err != nil {
 		return fmt.Errorf("login: %v", err)

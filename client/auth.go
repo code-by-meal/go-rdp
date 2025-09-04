@@ -62,7 +62,7 @@ func (c *Client) _Negotiation() error {
 				return fmt.Errorf("nego: close tcp: %v", err)
 			}
 
-			stream, err := core.NewStream(c.Host, c.Port, c.Timeout, c.Context)
+			stream, err := core.NewStream(c.Context, c.Host, c.Port, c.Timeout)
 
 			if err != nil {
 				return fmt.Errorf("nego: new stream: %v", err)

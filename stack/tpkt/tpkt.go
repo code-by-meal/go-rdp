@@ -28,7 +28,7 @@ func Write(stream io.Writer, buff *bytes.Buffer) error {
 	tpktPacket, err := core.Serialize(tpktHeader)
 
 	if err != nil {
-		return fmt.Errorf("tpkt: serialize bytes %v", err)
+		return fmt.Errorf("tpkt: serialize bytes %w", err)
 	}
 
 	tpktPacket = append(tpktPacket, buff.Bytes()...)
@@ -37,7 +37,7 @@ func Write(stream io.Writer, buff *bytes.Buffer) error {
 	log.Dbg("<i>[TPKT-WRITE]</> ", tpktPacket)
 
 	if _, err := stream.Write(tpktPacket); err != nil {
-		return fmt.Errorf("tpkt: write buff: %v", err)
+		return fmt.Errorf("tpkt: write buff: %w", err)
 	}
 
 	return nil
@@ -45,15 +45,16 @@ func Write(stream io.Writer, buff *bytes.Buffer) error {
 
 func Read(stream io.Reader) (*bytes.Buffer, error) {
 	var tpktHeader Header
+
 	buff := new(bytes.Buffer)
 	tpktPacket, err := core.ReadFull(stream, HeaderLength)
 
 	if err != nil {
-		return buff, fmt.Errorf("tpkt: read full: %v", err)
+		return buff, fmt.Errorf("tpkt: read full: %w", err)
 	}
 
 	if err := core.Unserialize(bytes.NewBuffer(tpktPacket), &tpktHeader); err != nil {
-		return buff, fmt.Errorf("tpkt: unserialize: %v", err)
+		return buff, fmt.Errorf("tpkt: unserialize: %w", err)
 	}
 
 	if tpktHeader.Version != 3 || tpktHeader.Length <= 4 {
@@ -63,11 +64,11 @@ func Read(stream io.Reader) (*bytes.Buffer, error) {
 	tpktData, err := core.ReadFull(stream, int(tpktHeader.Length)-HeaderLength)
 
 	if err != nil {
-		return buff, nil
+		return buff, fmt.Errorf("tpkt: read %w", err)
 	}
 
 	if _, err := buff.Write(tpktData); err != nil {
-		return buff, nil
+		return buff, fmt.Errorf("tpkt: write %w", err)
 	}
 
 	log.Dbg("<i>[TPKT-HEADER]</> ", tpktHeader)

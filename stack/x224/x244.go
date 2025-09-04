@@ -42,14 +42,15 @@ func Write(stream io.Writer, data *bytes.Buffer, pdu TypePDU) error {
 	}
 	buff := new(bytes.Buffer)
 
-	switch pdu {
+	switch pdu { // nolint
 	case ConnectionRequestPDU:
 		if data.Len() > 0xf9 {
 			return fmt.Errorf("x224: invalid data length: %d, can't be more than 0xf9", data.Len())
 		}
+
 		x224Header.Length = uint8(data.Len() + 6)
 	case DataPDU:
-		log.Err(fmt.Errorf("x224 data pdu not implemented!"))
+		log.Err(fmt.Errorf("x224 data pdu not implemented"))
 	default:
 		log.Err(fmt.Sprintf("<e>x224</>: unproccessed pdu type <i>%d</>", pdu))
 	}
@@ -57,22 +58,22 @@ func Write(stream io.Writer, data *bytes.Buffer, pdu TypePDU) error {
 	x224Packet, err := core.Serialize(x224Header)
 
 	if err != nil {
-		return fmt.Errorf("x224: %v", err)
+		return fmt.Errorf("x224: %w", err)
 	}
 
 	if _, err := buff.Write(x224Packet); err != nil {
-		return fmt.Errorf("x224: %v", err)
+		return fmt.Errorf("x224: %w", err)
 	}
 
 	if _, err := buff.Write(data.Bytes()); err != nil {
-		return fmt.Errorf("x224: %v", err)
+		return fmt.Errorf("x224: %w", err)
 	}
 
 	log.Dbg("<i>[X224-HEADER]</> ", x224Header)
 	log.Dbg("<i>[X224-WRITE]</> ", buff.Bytes())
 
 	if err := tpkt.Write(stream, buff); err != nil {
-		return fmt.Errorf("x224: %v", err)
+		return fmt.Errorf("x224: %w", err)
 	}
 
 	return nil
@@ -82,7 +83,7 @@ func Read(stream io.Reader) (*bytes.Buffer, error) {
 	buff, err := tpkt.Read(stream)
 
 	if err != nil {
-		return buff, fmt.Errorf("x224: %v", err)
+		return buff, fmt.Errorf("x224: %w", err)
 	}
 
 	var x224Header Header
@@ -92,13 +93,14 @@ func Read(stream io.Reader) (*bytes.Buffer, error) {
 	}
 
 	if err := core.Unserialize(buff, &x224Header); err != nil {
-		return buff, fmt.Errorf("x224 unserialize: %v", err)
+		return buff, fmt.Errorf("x224 unserialize: %w", err)
 	}
 
-	switch x224Header.PDUType {
+	switch x224Header.PDUType { // nolint
 	case ConnectionConfirmPDU:
 		if x224Header.Length != uint8(buff.Len()+HeaderLength-1) {
 			log.Dbg("Header size: ", int(unsafe.Sizeof(x224Header)))
+
 			return buff, fmt.Errorf("x224: invalid header length: %d need: %d", x224Header.Length, HeaderLength)
 		}
 	case DataPDU:
@@ -106,7 +108,7 @@ func Read(stream io.Reader) (*bytes.Buffer, error) {
 			return buff, fmt.Errorf("x224: invalid header")
 		}
 
-		log.Err(fmt.Errorf("x224 data pdu not implemented!"))
+		log.Err(fmt.Errorf("x224 data pdu not implemented"))
 	default:
 	}
 

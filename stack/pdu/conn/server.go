@@ -21,13 +21,13 @@ func (n *NegoResponse) Read(stream io.Reader) error {
 	buff, err := x224.Read(stream)
 
 	if err != nil {
-		return fmt.Errorf("nego resp: %v", err)
+		return fmt.Errorf("nego resp: %w", err)
 	}
 
 	log.Dbg("<i>[NEGO-RESPONSE-READ]</> ", buff.Bytes())
 
 	if err := core.Unserialize(buff, n); err != nil {
-		return fmt.Errorf("nego resp: unserialize %v", err)
+		return fmt.Errorf("nego resp: unserialize %w", err)
 	}
 
 	return nil

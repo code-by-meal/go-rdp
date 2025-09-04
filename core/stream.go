@@ -13,13 +13,16 @@ type Stream struct {
 	Conn net.Conn
 }
 
-func NewStream(host string, port uint16, timeout time.Duration, ctx context.Context) (*Stream, error) {
+func NewStream(ctx context.Context, host string, port uint16, timeout time.Duration) (*Stream, error) {
 	dialer := net.Dialer{}
-	dialerCtx, _ := context.WithTimeout(ctx, timeout)
+	dialerCtx, cancel := context.WithTimeout(ctx, timeout)
+
+	defer cancel()
+
 	con, err := dialer.DialContext(dialerCtx, "tcp", fmt.Sprintf("%s:%d", host, port))
 
 	if err != nil {
-		return nil, fmt.Errorf("dial tcp: %v", err)
+		return nil, fmt.Errorf("dial tcp: %w", err)
 	}
 
 	go func() {
@@ -32,16 +35,19 @@ func NewStream(host string, port uint16, timeout time.Duration, ctx context.Cont
 	}, nil
 }
 
-func (s *Stream) SwitchSSL() error {
+func (s *Stream) SwitchSSL(ctx context.Context, timeout time.Duration) error {
 	cfg := &tls.Config{
 		MinVersion:         tls.VersionTLS10,
 		MaxVersion:         tls.VersionTLS13,
 		InsecureSkipVerify: true,
 	}
 	tlsClient := tls.Client(s.Conn, cfg)
+	tlsContext, cancel := context.WithTimeout(ctx, timeout)
 
-	if err := tlsClient.Handshake(); err != nil {
-		return fmt.Errorf("switch ssl: %v", err)
+	defer cancel()
+
+	if err := tlsClient.HandshakeContext(tlsContext); err != nil {
+		return fmt.Errorf("switch ssl: %w", err)
 	}
 
 	s.Conn = tlsClient
@@ -50,18 +56,30 @@ func (s *Stream) SwitchSSL() error {
 }
 
 func (s *Stream) Read(d []byte) (int, error) {
-	return s.Conn.Read(d)
+	n, err := s.Conn.Read(d)
+
+	if err != nil {
+		return n, fmt.Errorf("stream: read %w", err)
+	}
+
+	return n, nil
 }
 
 func (s *Stream) Write(d []byte) (int, error) {
-	return s.Conn.Write(d)
+	n, err := s.Conn.Write(d)
+
+	if err != nil {
+		return n, fmt.Errorf("stream: write %w", err)
+	}
+
+	return n, nil
 }
 
 func ReadFull(stream io.Reader, length int) ([]byte, error) {
 	buff := make([]byte, length)
 
 	if _, err := io.ReadFull(stream, buff); err != nil {
-		return buff, fmt.Errorf("stream: read full: %v", err)
+		return buff, fmt.Errorf("stream: read full: %w", err)
 	}
 
 	return buff, nil

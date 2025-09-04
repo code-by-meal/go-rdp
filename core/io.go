@@ -15,7 +15,6 @@ const (
 	OrderTag Tag = "order"
 )
 
-// Serializing of any structures to slice of bytes
 func Serialize(obj any) ([]byte, error) {
 	var buff bytes.Buffer
 
@@ -40,7 +39,7 @@ func Serialize(obj any) ([]byte, error) {
 
 	t := v.Type()
 
-	switch v.Kind() {
+	switch v.Kind() { // nolint
 	case reflect.Struct:
 		for i := 0; i < v.NumField(); i++ {
 			fieldV := v.Field(i)
@@ -49,8 +48,7 @@ func Serialize(obj any) ([]byte, error) {
 			// tags proccessing
 			order := _GetOrder(fieldT)
 
-			switch fieldV.Kind() {
-			// uint`s
+			switch fieldV.Kind() { // nolint
 			case reflect.Uint8:
 				if err := buff.WriteByte(byte(fieldV.Uint())); err != nil {
 					return buff.Bytes(), err
@@ -101,7 +99,6 @@ func Serialize(obj any) ([]byte, error) {
 	return buff.Bytes(), nil
 }
 
-// Try unserialize slice of bytes to struct
 func Unserialize(buff *bytes.Buffer, dst any) error {
 	v := reflect.ValueOf(dst)
 
@@ -132,12 +129,12 @@ func Unserialize(buff *bytes.Buffer, dst any) error {
 			fieldV = fieldV.Elem()
 		}
 
-		switch fieldV.Kind() {
+		switch fieldV.Kind() { // nolint
 		case reflect.Uint8:
 			b, err := buff.ReadByte()
 
 			if err != nil {
-				return err
+				return fmt.Errorf("%w", err)
 			}
 
 			fieldV.SetUint(uint64(b))
@@ -145,7 +142,7 @@ func Unserialize(buff *bytes.Buffer, dst any) error {
 			var tmp [2]byte
 
 			if _, err := buff.Read(tmp[:]); err != nil {
-				return err
+				return fmt.Errorf("%w", err)
 			}
 
 			fieldV.SetUint(uint64(order.Uint16(tmp[:])))
@@ -153,7 +150,7 @@ func Unserialize(buff *bytes.Buffer, dst any) error {
 			var tmp [4]byte
 
 			if _, err := buff.Read(tmp[:]); err != nil {
-				return err
+				return fmt.Errorf("%w", err)
 			}
 
 			fieldV.SetUint(uint64(order.Uint32(tmp[:])))
@@ -161,7 +158,7 @@ func Unserialize(buff *bytes.Buffer, dst any) error {
 			var tmp [8]byte
 
 			if _, err := buff.Read(tmp[:]); err != nil {
-				return err
+				return fmt.Errorf("%w", err)
 			}
 
 			fieldV.SetUint(order.Uint64(tmp[:]))
@@ -171,7 +168,7 @@ func Unserialize(buff *bytes.Buffer, dst any) error {
 			deepPtr := reflect.New(fieldV.Type())
 
 			if err := Unserialize(buff, deepPtr.Interface()); err != nil {
-				return err
+				return fmt.Errorf("%w", err)
 			}
 
 			fieldV.Set(deepPtr.Elem())

@@ -26,7 +26,7 @@ func (c *NegoRequest) Write(stream io.Writer) error {
 	packet, err := core.Serialize(c)
 
 	if err != nil {
-		return fmt.Errorf("nego req: %v", err)
+		return fmt.Errorf("nego req: %w", err)
 	}
 
 	log.Dbg("<i>[PDU-WRITE]</> ", packet)
@@ -34,7 +34,7 @@ func (c *NegoRequest) Write(stream io.Writer) error {
 	buff := bytes.NewBuffer(packet)
 
 	if err := x224.Write(stream, buff, x224.ConnectionRequestPDU); err != nil {
-		return fmt.Errorf("nego req: %v", err)
+		return fmt.Errorf("nego req: %w", err)
 	}
 
 	return nil
