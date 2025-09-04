@@ -46,13 +46,21 @@ func (c *Client) Login(
 	stream, err := core.NewStream(c.Context, c.Host, c.Port, c.Timeout)
 
 	if err != nil {
-		return fmt.Errorf("login: %v", err)
+		return fmt.Errorf("login: %w", err)
 	}
 
 	c.Stream = stream
 
 	if err := c._Negotiation(); err != nil {
-		return fmt.Errorf("nego: %v", err)
+		return fmt.Errorf("login: %w", err)
+	}
+
+	return nil
+}
+
+func (c *Client) Close() error {
+	if err := c.Stream.Conn.Close(); err != nil {
+		return fmt.Errorf("close: %w", err)
 	}
 
 	return nil

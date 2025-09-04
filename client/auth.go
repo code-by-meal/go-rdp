@@ -10,6 +10,7 @@ import (
 
 func (c *Client) _Negotiation() error {
 	var selectedProtocol conn.NegoProtocol
+
 	requestedProtocols := conn.RDP | conn.Hybrid | conn.TLS // Some commonly used by RDP clients RequestedProtocol flag
 	tryCount := 1
 
@@ -20,7 +21,7 @@ func (c *Client) _Negotiation() error {
 		negoReq := conn.NewNegoRequest(c.Username, requestedProtocols)
 
 		if err := negoReq.Write(c.Stream); err != nil {
-			return fmt.Errorf("nego con-req: %v", err)
+			return fmt.Errorf("nego con-req: %w", err)
 		}
 
 		log.Zebra(fmt.Sprintf("\n[NEGOTIATION-CONFIRM-RESPONSE] Try: %d", tryCount), log.SuccessColor)
@@ -28,10 +29,10 @@ func (c *Client) _Negotiation() error {
 		negoRes := conn.NewNegoResponse()
 
 		if err := negoRes.Read(c.Stream); err != nil {
-			return fmt.Errorf("nego conf-resp: %v", err)
+			return fmt.Errorf("nego conf-resp: %w", err)
 		}
 
-		switch negoRes.Type {
+		switch negoRes.Type { // nolint
 		case conn.Failure:
 			switch conn.FailureCode(negoRes.RequestedProtocols) {
 			// The server requires that the client support Enhanced RDP Security with either TLS 1.0, 1.1 or 1.2 or CredSSP. If only CredSSP was requested then the server only supports TLS.
@@ -59,13 +60,13 @@ func (c *Client) _Negotiation() error {
 
 			// You absolutely need to close connection TCP
 			if err := c.Stream.Conn.Close(); err != nil {
-				return fmt.Errorf("nego: close tcp: %v", err)
+				return fmt.Errorf("nego: close tcp: %w", err)
 			}
 
 			stream, err := core.NewStream(c.Context, c.Host, c.Port, c.Timeout)
 
 			if err != nil {
-				return fmt.Errorf("nego: new stream: %v", err)
+				return fmt.Errorf("nego: new stream: %w", err)
 			}
 
 			c.Stream = stream
@@ -77,22 +78,33 @@ func (c *Client) _Negotiation() error {
 			log.Info("<e>[UNKNOWN NEGOTIATION RESPONSE TYPE]</> ", fmt.Sprintf("Code: %d", negoReq.Type))
 		}
 
-		tryCount += 1
+		tryCount++
 	}
 
 out_loop:
+	log.Dbg(fmt.Sprintf("[<i>SELECTED NEGO PROTOCOL</>: <d>%s</>]", conn.Protocols[selectedProtocol]))
+
 	switch selectedProtocol {
 	case conn.RDP:
+		// No need to init TLS layer
+		// Working without any encryption layer
 	case conn.TLS:
+		// Need TLS layer
+		return fmt.Errorf("not implemented")
 	case conn.Hybrid:
+		// Need TLS layer
+		return fmt.Errorf("not implemented")
 	case conn.RDSTLS:
+		// Need TLS layer
+		return fmt.Errorf("not implemented")
 	case conn.HybridExtended:
+		// Need TLS layer
+		return fmt.Errorf("not implemented")
 	case conn.RDSAAD:
+		return fmt.Errorf("not implemented")
 	default:
 		log.Info(fmt.Sprintf("<e>nego</>: not implemented protocol (code: 0x%X)", selectedProtocol))
 	}
-
-	log.Dbg(fmt.Sprintf("[<i>SELECTED NEGO PROTOCOL</>: <d>%s</>]", conn.Protocols[selectedProtocol]))
 
 	return nil
 }
