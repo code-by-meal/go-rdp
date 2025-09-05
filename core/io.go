@@ -21,16 +21,12 @@ func Serialize(obj any) ([]byte, error) {
 	v := reflect.ValueOf(obj)
 
 	if !v.IsValid() {
-		log.Dbg("Not <e>valid</> reflect type.")
-
 		return buff.Bytes(), fmt.Errorf("value is not valid")
 	}
 
 	// Check if value is pointer and not nil
 	for v.Kind() == reflect.Pointer {
 		if v.IsNil() {
-			log.Dbg("Pointer is <e>nil</>.")
-
 			return buff.Bytes(), fmt.Errorf("nil pointer")
 		}
 

@@ -5,7 +5,7 @@ import (
 
 	"github.com/code-by-meal/go-rdp/core"
 	"github.com/code-by-meal/go-rdp/log"
-	"github.com/code-by-meal/go-rdp/stack/pdu/conn"
+	"github.com/code-by-meal/go-rdp/stack/rdp/conn"
 )
 
 func (c *Client) _Negotiation() error {
@@ -92,7 +92,8 @@ out_loop:
 		// Need TLS layer
 		return fmt.Errorf("not implemented")
 	case conn.Hybrid:
-		// Need TLS layer
+		// CredSSP / NLA
+		// TLS -> SPNEGO (Kerberos or NTLM)
 		return fmt.Errorf("not implemented")
 	case conn.RDSTLS:
 		// Need TLS layer
@@ -106,5 +107,11 @@ out_loop:
 		log.Info(fmt.Sprintf("<e>nego</>: not implemented protocol (code: 0x%X)", selectedProtocol))
 	}
 
+	c.SelectedProtocol = selectedProtocol
+
+	return nil
+}
+
+func (c *Client) _BasicSettingExchange() error {
 	return nil
 }

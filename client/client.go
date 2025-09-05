@@ -7,17 +7,21 @@ import (
 
 	"github.com/code-by-meal/go-rdp/core"
 	"github.com/code-by-meal/go-rdp/log"
+	"github.com/code-by-meal/go-rdp/stack/rdp/conn"
 )
 
 type Client struct {
-	Host     string
-	Port     uint16
-	Context  context.Context
-	Stream   *core.Stream
-	Domain   string
-	Username string
-	Password string
-	Timeout  time.Duration
+	Host             string
+	Port             uint16
+	Context          context.Context
+	Stream           *core.Stream
+	Domain           string
+	Username         string
+	Password         string
+	Timeout          time.Duration
+	SelectedProtocol conn.NegoProtocol
+	Width            uint32
+	Height           uint32
 }
 
 func NewClient(ctx context.Context, host string, port uint16) *Client {
