@@ -231,5 +231,178 @@ func _ReadUniversalTag(stream io.Reader, tag Tag, pc bool) error {
 }
 
 func _ReadLength(stream io.Reader) (int, error) {
-	return 0, nil
+	var size uint8
+
+	msg := "ber: read len: %w"
+
+	if err := core.ReadSingleAny(stream, &size, binary.BigEndian); err != nil {
+		return 0, fmt.Errorf(msg, err)
+	}
+
+	if size&0x80 == 0 {
+		return int(size), nil
+	}
+
+	switch size = size &^ 0x80; size {
+	case 1:
+		var value uint8
+
+		if err := core.ReadSingleAny(stream, &size, binary.BigEndian); err != nil {
+			return 0, fmt.Errorf(msg, err)
+		}
+
+		return int(value), nil
+	case 2:
+		var value uint16
+
+		if err := core.ReadSingleAny(stream, &size, binary.BigEndian); err != nil {
+			return 0, fmt.Errorf(msg, err)
+		}
+
+		return int(value), nil
+	}
+
+	return 0, fmt.Errorf("ber: read len: no valid size")
+}
+
+func ReadInteger(stream io.Reader) (int, error) {
+	msg := "ber: read int: %w"
+
+	if err := _ReadUniversalTag(stream, TagInteger, false); err != nil {
+		return 0, fmt.Errorf(msg, err)
+	}
+
+	length, err := _ReadLength(stream)
+
+	if err != nil {
+		return 0, fmt.Errorf(msg, err)
+	}
+
+	switch length {
+	case 1:
+		var value uint8
+
+		if err := core.ReadSingleAny(stream, &value, binary.BigEndian); err != nil {
+			return 0, fmt.Errorf(msg, err)
+		}
+
+		return int(value), nil
+	case 2:
+		var value uint16
+
+		if err := core.ReadSingleAny(stream, &value, binary.BigEndian); err != nil {
+			return 0, fmt.Errorf(msg, err)
+		}
+
+		return int(value), nil
+	case 3:
+		var value1 uint8
+		var value2 uint16
+
+		if err := core.ReadSingleAny(stream, &value1, binary.BigEndian); err != nil {
+			return 0, fmt.Errorf(msg, err)
+		}
+
+		if err := core.ReadSingleAny(stream, &value2, binary.BigEndian); err != nil {
+			return 0, fmt.Errorf(msg, err)
+		}
+
+		return int(value1)<<16 + int(value2), nil
+	case 4:
+		var value uint32
+
+		if err := core.ReadSingleAny(stream, &value, binary.BigEndian); err != nil {
+			return 0, fmt.Errorf(msg, err)
+		}
+	}
+
+	return 0, fmt.Errorf("ber: read int: ")
+}
+
+func ReadEnumerated(stream io.Reader) (uint8, error) {
+	msg := "ber: read enum: %w"
+
+	if err := _ReadUniversalTag(stream, TagEnumerated, false); err != nil {
+		return 0, fmt.Errorf(msg, err)
+	}
+
+	length, err := _ReadLength(stream)
+
+	if err != nil {
+		return 0, fmt.Errorf(msg, err)
+	}
+
+	if length != 1 {
+		return 0, fmt.Errorf(msg, fmt.Errorf("invalid enum length"))
+	}
+
+	var value uint8
+
+	if err := core.ReadSingleAny(stream, &value, binary.BigEndian); err != nil {
+		return 0, fmt.Errorf(msg, err)
+	}
+
+	return value, nil
+}
+
+func ReadApplication(stream io.Reader, tag Tag) ([]byte, error) {
+	var bb uint8
+
+	msg := "ber: read app: %w"
+
+	if err := core.ReadSingleAny(stream, &bb, binary.BigEndian); err != nil {
+		return []byte{}, fmt.Errorf(msg, err)
+	}
+
+	if tag > 30 {
+		if bb != (uint8(ClassAppl)|uint8(Construct))|uint8(TagMask) {
+			return []byte{}, fmt.Errorf(msg, fmt.Errorf("invalid data"))
+		}
+
+		if err := core.ReadSingleAny(stream, &bb, binary.BigEndian); err != nil {
+			return []byte{}, fmt.Errorf(msg, err)
+		}
+
+		if bb != uint8(tag) {
+			return []byte{}, fmt.Errorf(msg, fmt.Errorf("invalid tag: need %d get %d", tag, bb))
+		}
+	} else if bb != (uint8(ClassMask)|uint8(Construct))|(uint8(TagMask)&uint8(tag)) {
+		return []byte{}, fmt.Errorf(msg, fmt.Errorf("invalid tag: need %d get %d", tag, bb))
+	}
+
+	length, err := _ReadLength(stream)
+
+	if err != nil {
+		return []byte{}, fmt.Errorf(msg, err)
+	}
+
+	buff := make([]byte, length)
+
+	if _, err := stream.Read(buff); err != nil {
+		return buff, fmt.Errorf(msg, err)
+	}
+
+	return buff, nil
+}
+
+func ReadDomainParameters(stream io.Reader) ([]byte, error) {
+	msg := "ber: read dp: %w"
+
+	if err := _ReadUniversalTag(stream, TagSequence, true); err != nil {
+		return []byte{}, fmt.Errorf(msg, err)
+	}
+
+	length, err := _ReadLength(stream)
+
+	if err != nil {
+		return []byte{}, fmt.Errorf(msg, err)
+	}
+
+	buff := make([]byte, length)
+
+	if _, err := io.ReadFull(stream, buff); err != nil {
+		return buff, fmt.Errorf(msg, err)
+	}
+
+	return buff, nil
 }
