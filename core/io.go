@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
+	"io"
 	"reflect"
 
 	"github.com/code-by-meal/go-rdp/log"
@@ -186,4 +187,59 @@ func _GetOrder(field reflect.StructField) binary.ByteOrder {
 	}
 
 	return binary.LittleEndian
+}
+
+// Single objects reading
+func ReadSingleAny(stream io.Reader, ptr any, order binary.ByteOrder) error {
+	v := reflect.ValueOf(ptr)
+
+	if !v.IsValid() {
+		return fmt.Errorf("io: read single: not valid ptr")
+	}
+
+	if v.IsNil() || v.Kind() == reflect.Struct {
+		return fmt.Errorf("io: read single: ptr is nil or struct")
+	}
+
+	v = v.Elem()
+	msg := "io: read single (type: %s): %w"
+
+	switch v.Kind() {
+	case reflect.Uint8:
+		tmp := make([]byte, 1)
+
+		if _, err := stream.Read(tmp); err != nil {
+			return fmt.Errorf(msg, v.Type(), err)
+		}
+
+		v.SetUint(uint64(tmp[0]))
+	case reflect.Uint16:
+		tmp := make([]byte, 2)
+
+		if _, err := stream.Read(tmp); err != nil {
+			return fmt.Errorf(msg, v.Type(), err)
+		}
+
+		v.SetUint(uint64(order.Uint16(tmp)))
+	case reflect.Uint32:
+		tmp := make([]byte, 4)
+
+		if _, err := stream.Read(tmp); err != nil {
+			return fmt.Errorf(msg, v.Type(), err)
+		}
+
+		v.SetUint(uint64(order.Uint32(tmp)))
+	case reflect.Uint64:
+		tmp := make([]byte, 8)
+
+		if _, err := stream.Read(tmp); err != nil {
+			return fmt.Errorf(msg, v.Type(), err)
+		}
+
+		v.SetUint(order.Uint64(tmp))
+	default:
+		log.Info(fmt.Sprintf("<e>[UNKNOWN SINGLE TYPE]</> <d>%s</>", v.Type()))
+	}
+
+	return nil
 }
