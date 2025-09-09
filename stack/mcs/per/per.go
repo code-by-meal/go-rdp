@@ -10,7 +10,7 @@ import (
 
 // PER Writing functions
 
-func _WriteLength(stream io.Writer, length int) error {
+func WriteLength(stream io.Writer, length int) error {
 	prefix := "per: write length: %w"
 
 	if length > 0x7f {
@@ -20,6 +20,7 @@ func _WriteLength(stream io.Writer, length int) error {
 			return fmt.Errorf(prefix, err)
 		}
 	} else {
+
 		if _, err := stream.Write([]byte{uint8(length & 0xff)}); err != nil {
 			return fmt.Errorf(prefix, err)
 		}
@@ -33,7 +34,7 @@ func WriteInteger(stream io.Writer, v uint32) error {
 
 	switch {
 	case v <= 0xff:
-		if err := _WriteLength(stream, 1); err != nil {
+		if err := WriteLength(stream, 1); err != nil {
 			return fmt.Errorf(prefix, err)
 		}
 
@@ -43,7 +44,7 @@ func WriteInteger(stream io.Writer, v uint32) error {
 			return fmt.Errorf(prefix, err)
 		}
 	case v <= 0xffff:
-		if err := _WriteLength(stream, 2); err != nil {
+		if err := WriteLength(stream, 2); err != nil {
 			return fmt.Errorf(prefix, err)
 		}
 
@@ -53,7 +54,7 @@ func WriteInteger(stream io.Writer, v uint32) error {
 			return fmt.Errorf(prefix, err)
 		}
 	default:
-		if err := _WriteLength(stream, 4); err != nil {
+		if err := WriteLength(stream, 4); err != nil {
 			return fmt.Errorf(prefix, err)
 		}
 
@@ -76,7 +77,7 @@ func WriteOctetString(stream io.Writer, str string, minLengt int) error {
 
 	prefix := "per: write octet str: %w"
 
-	if err := _WriteLength(stream, minLengt); err != nil {
+	if err := WriteLength(stream, minLengt); err != nil {
 		return fmt.Errorf(prefix, err)
 	}
 
@@ -95,7 +96,7 @@ func WriteNumberOfSet(stream io.Writer, n int) error {
 	return nil
 }
 
-func WritePaddingLength(stream io.Writer, padd int) error {
+func WritePadding(stream io.Writer, padd int) error {
 	if _, err := stream.Write(make([]byte, padd)); err != nil {
 		return fmt.Errorf("per: write padding: %w", err)
 	}
@@ -112,17 +113,18 @@ func WriteNumericString(stream io.Writer, str string, minValue int) error {
 
 	prefix := "per: write numeric str: %w"
 
-	if err := _WriteLength(stream, minValue); err != nil {
+	if err := WriteLength(stream, minValue); err != nil {
 		return fmt.Errorf(prefix, err)
 	}
 
 	for i := 0; i < l; i += 2 {
 		c1 := str[i]
 		c2 := 0x30
+
 		if i+1 < l {
 			c2 = int(str[i+1])
 		}
-		//c2 := core.If((i+1) < length, numStr[i+1], 0x30)
+
 		c1 = (c1 - 0x30) % 10
 		c2 = (c2 - 0x30) % 10
 		num := (c1 << 4) | uint8(c2)
@@ -164,9 +166,17 @@ func WriteChoice(stream io.Writer, choice byte) error {
 	return nil
 }
 
+func WriteSelection(stream io.Writer, s byte) error {
+	if _, err := stream.Write([]byte{s}); err != nil {
+		return fmt.Errorf("pre: write selection: %w", err)
+	}
+
+	return nil
+}
+
 // PER Reading functions
 
-func _ReadLength(stream io.Reader) (int, error) {
+func ReadLength(stream io.Reader) (int, error) {
 	var b uint8
 
 	prefix := "per: read length: %w"
@@ -177,6 +187,7 @@ func _ReadLength(stream io.Reader) (int, error) {
 
 	if b&0x80 != 0 {
 		length := int(b&^0x80) << 8
+
 		var bb uint8
 
 		if err := core.ReadSingleAny(stream, &bb, binary.BigEndian); err != nil {
@@ -200,7 +211,7 @@ func ReadChoice(stream io.Reader) (byte, error) {
 }
 
 func ReadOID(stream io.Reader) ([]byte, error) {
-	length, err := _ReadLength(stream)
+	length, err := ReadLength(stream)
 	prefix := "per: read oid: %w"
 
 	if err != nil {
@@ -241,7 +252,7 @@ func ReadNumberOfSet(stream io.Reader) (int, error) {
 
 func ReadOctetString(stream io.Reader, minLen int) ([]byte, error) {
 	prefix := "per: read oct string: %w"
-	length, err := _ReadLength(stream)
+	length, err := ReadLength(stream)
 
 	if err != nil {
 		return []byte{}, fmt.Errorf(prefix, err)
@@ -258,7 +269,7 @@ func ReadOctetString(stream io.Reader, minLen int) ([]byte, error) {
 
 func ReadInteger(stream io.Reader) (uint32, error) {
 	prefix := "per: read int: %w"
-	length, err := _ReadLength(stream)
+	length, err := ReadLength(stream)
 
 	if err != nil {
 		return 0, fmt.Errorf(prefix, err)
