@@ -168,7 +168,7 @@ func WriteOctetString(stream io.Writer, v string) error {
 	return nil
 }
 
-func WriteDomainParameters(stream io.Writer, v []byte) error {
+func WriteParameters(stream io.Writer, v []byte) error {
 	msg := "ber: write dp: %w"
 
 	if err := _WriteUniversalTag(stream, TagSequence, true); err != nil {

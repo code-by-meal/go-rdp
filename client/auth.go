@@ -5,6 +5,7 @@ import (
 
 	"github.com/code-by-meal/go-rdp/core"
 	"github.com/code-by-meal/go-rdp/log"
+	"github.com/code-by-meal/go-rdp/stack/mcs"
 	"github.com/code-by-meal/go-rdp/stack/rdp/conn"
 )
 
@@ -113,5 +114,13 @@ out_loop:
 }
 
 func (c *Client) _BasicSettingExchange() error {
+	// Testing t125 ConnectMCSPDU
+	prefix := "basic sett exchange: %w"
+	ci := mcs.NewConnectInitial([]byte("User data here!"))
+
+	if err := ci.Write(c.Stream); err != nil {
+		return fmt.Errorf(prefix, err)
+	}
+
 	return nil
 }

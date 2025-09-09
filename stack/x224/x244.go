@@ -28,34 +28,64 @@ type Header struct {
 	SourceReference      uint16
 	Flags                uint8
 }
+type DataHeader struct {
+	Length               uint8
+	PDUType              TypePDU
+	DestinationReference uint8
+}
 
 var (
 	HeaderLength = 7
 )
 
-func Write(stream io.Writer, data *bytes.Buffer, pdu TypePDU) error {
-	x224Header := Header{
-		PDUType:              pdu,
-		DestinationReference: 0,
-		SourceReference:      0,
-		Flags:                0,
-	}
-	buff := new(bytes.Buffer)
+func _WriteHeader(pdu TypePDU, length int) ([]byte, error) {
+	prefix := "x224: get header: %w"
 
-	switch pdu { // nolint
-	case ConnectionRequestPDU:
-		if data.Len() > 0xf9 {
-			return fmt.Errorf("x224: invalid data length: %d, can't be more than 0xf9", data.Len())
+	switch pdu {
+	case DataPDU:
+		header := DataHeader{
+			Length:               2,
+			PDUType:              DataPDU,
+			DestinationReference: 0x80,
 		}
 
-		x224Header.Length = uint8(data.Len() + 6)
-	case DataPDU:
-		log.Err(fmt.Errorf("x224 data pdu not implemented"))
+		headerBody, err := core.Serialize(&header)
+
+		if err != nil {
+			return []byte{}, fmt.Errorf(prefix, err)
+		}
+
+		return headerBody, nil
+	case ConnectionRequestPDU:
+		if length > 0xf9 {
+			return []byte{}, fmt.Errorf(prefix, fmt.Errorf("invalid data length: %d, cant more then 0xf9", length))
+		}
+
+		header := Header{
+			PDUType:              ConnectionRequestPDU,
+			DestinationReference: 0,
+			SourceReference:      0,
+			Length:               uint8(length + 6),
+		}
+
+		headerBody, err := core.Serialize(&header)
+
+		if err != nil {
+			return []byte{}, fmt.Errorf(prefix, err)
+		}
+
+		return headerBody, nil
+
 	default:
-		log.Err(fmt.Sprintf("<e>x224</>: unproccessed pdu type <i>%d</>", pdu))
+		log.Info(fmt.Sprintf("<e>x224 unknown header: </> <d>%s</>", string(pdu)))
 	}
 
-	x224Packet, err := core.Serialize(x224Header)
+	return []byte{}, fmt.Errorf("x224: get header: invalid pdu type")
+}
+
+func Write(stream io.Writer, data *bytes.Buffer, pdu TypePDU) error {
+	buff := new(bytes.Buffer)
+	x224Packet, err := _WriteHeader(pdu, data.Len())
 
 	if err != nil {
 		return fmt.Errorf("x224: %w", err)
@@ -69,7 +99,6 @@ func Write(stream io.Writer, data *bytes.Buffer, pdu TypePDU) error {
 		return fmt.Errorf("x224: %w", err)
 	}
 
-	log.Dbg("<i>[X224-HEADER]</> ", x224Header)
 	log.Dbg("<i>[X224-WRITE]</> ", buff.Bytes())
 
 	if err := tpkt.Write(stream, buff); err != nil {
@@ -108,7 +137,6 @@ func Read(stream io.Reader) (*bytes.Buffer, error) {
 			return buff, fmt.Errorf("x224: invalid header")
 		}
 
-		log.Err(fmt.Errorf("x224 data pdu not implemented"))
 	default:
 	}
 

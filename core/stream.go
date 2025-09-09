@@ -74,3 +74,13 @@ func (s *Stream) Write(d []byte) (int, error) {
 
 	return n, nil
 }
+
+func ReadFull(stream io.Reader, length int) ([]byte, error) {
+	buff := make([]byte, length)
+
+	if _, err := io.ReadFull(stream, buff); err != nil {
+		return buff, fmt.Errorf("stream: read full: %w", err)
+	}
+
+	return buff, nil
+}

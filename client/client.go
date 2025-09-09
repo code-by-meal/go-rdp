@@ -41,6 +41,8 @@ func (c *Client) Login(
 ) error {
 	log.Dbg(fmt.Sprintf("Try login with to <d>%s:%d</> (domain: <d>%s</>\tusername: <d>%s</>\tpassword: <d>%s</>)", c.Host, c.Port, domain, username, password))
 
+	prefix := "login: %w"
+
 	c.Domain = domain
 	c.Username = username
 	c.Password = password
@@ -50,13 +52,17 @@ func (c *Client) Login(
 	stream, err := core.NewStream(c.Context, c.Host, c.Port, c.Timeout)
 
 	if err != nil {
-		return fmt.Errorf("login: %w", err)
+		return fmt.Errorf(prefix, err)
 	}
 
 	c.Stream = stream
 
 	if err := c._Negotiation(); err != nil {
-		return fmt.Errorf("login: %w", err)
+		return fmt.Errorf(prefix, err)
+	}
+
+	if err := c._BasicSettingExchange(); err != nil {
+		return fmt.Errorf(prefix, err)
 	}
 
 	return nil
