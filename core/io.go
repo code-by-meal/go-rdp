@@ -189,7 +189,7 @@ func _GetOrder(field reflect.StructField) binary.ByteOrder {
 	return binary.LittleEndian
 }
 
-// Single objects reading
+// Single type reading
 func ReadSingleAny(stream io.Reader, ptr any, order binary.ByteOrder) error {
 	v := reflect.ValueOf(ptr)
 
@@ -239,6 +239,46 @@ func ReadSingleAny(stream io.Reader, ptr any, order binary.ByteOrder) error {
 		v.SetUint(order.Uint64(tmp))
 	default:
 		log.Info(fmt.Sprintf("<e>[UNKNOWN SINGLE TYPE]</> <d>%s</>", v.Type()))
+	}
+
+	return nil
+}
+
+// Single type writing
+func WriteSingleAny(stream io.Writer, ptr any, order binary.ByteOrder) error {
+	v := reflect.ValueOf(ptr)
+
+	if !v.IsValid() {
+		return fmt.Errorf("io: write single: is not valid single any")
+	}
+
+	if v.Kind() != reflect.Pointer || v.IsNil() {
+		return fmt.Errorf("io: write single: value is not pointer or it is nil pointer")
+	}
+
+	v = v.Elem()
+
+	prefix := "io: write single: %w"
+
+	switch v.Kind() {
+	case reflect.Uint8:
+		if err := binary.Write(stream, order, uint8(v.Uint())); err != nil {
+			return fmt.Errorf(prefix, err)
+		}
+	case reflect.Uint16:
+		if err := binary.Write(stream, order, uint16(v.Uint())); err != nil {
+			return fmt.Errorf(prefix, err)
+		}
+	case reflect.Uint32:
+		if err := binary.Write(stream, order, uint32(v.Uint())); err != nil {
+			return fmt.Errorf(prefix, err)
+		}
+	case reflect.Uint64:
+		if err := binary.Write(stream, order, uint64(v.Uint())); err != nil {
+			return fmt.Errorf(prefix, err)
+		}
+	default:
+		log.Info(fmt.Sprintf("<e>[UNIMPLEMENTED SINGLE TYPE]</> %s", v.Type()))
 	}
 
 	return nil
