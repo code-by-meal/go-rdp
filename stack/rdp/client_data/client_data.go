@@ -8,7 +8,7 @@ import (
 	"github.com/code-by-meal/go-rdp/stack/rdp/nego"
 )
 
-type ClientDataRequest struct {
+type Request struct {
 	ClientCoreData
 	ClientClusterData
 	ClientSecurityData
@@ -17,7 +17,7 @@ type ClientDataRequest struct {
 	ClientMultiTransportData
 }
 
-func NewClientDataRequest(hostname string, protocol nego.NegoProtocol) *ClientDataRequest {
+func NewRequest(hostname string, protocol nego.NegoProtocol) *Request {
 	ccd := _NewClientCoreData(hostname)
 	ccld := _NewClientClusterData()
 	csd := _NewClientSecurityData()
@@ -27,7 +27,7 @@ func NewClientDataRequest(hostname string, protocol nego.NegoProtocol) *ClientDa
 
 	ccd.ServerSelectedProtocol = protocol
 
-	return &ClientDataRequest{
+	return &Request{
 		ClientCoreData:           *ccd,
 		ClientClusterData:        *ccld,
 		ClientSecurityData:       *csd,
@@ -37,7 +37,7 @@ func NewClientDataRequest(hostname string, protocol nego.NegoProtocol) *ClientDa
 	}
 }
 
-func (c *ClientDataRequest) Write(stream io.Writer) error {
+func (c *Request) Write(stream io.Writer) error {
 	prefix := "rdp: client-data: write: %w"
 	buffCCD, err := c.ClientCoreData.Serialize()
 
