@@ -1,24 +1,33 @@
 package mcs
 
 // MCS Message
+
+type Message uint8
+
 const (
-	MCSTypeConnectInitial  = 0x65
-	MCSTypeConnectResponse = 0x66
+	ConnectInitialM Message = 0x65
+	ConnectResponse Message = 0x66
 )
 
 // MCS PDU type
+
+type PDUType uint16
+
 const (
-	MCSPDUTypeErectDomainRequest = 1
-	MCSPDUTypeAttachUserRequest  = 10
-	MCSPDUTypeAttachUserConfirm  = 11
-	MCSPDUTypeChannelJoinRequest = 14
-	MCSPDUTypeChannelJoinConfirm = 15
-	MCSPDUTypeSendDataRequest    = 25
-	MCSPDUTypeSendDataIndication = 26
+	ErectDomainRequest PDUType = 1
+	AttachUserRequest  PDUType = 10
+	AttachUserConfirm  PDUType = 11
+	ChannelJoinRequest PDUType = 14
+	ChannelJoinConfirm PDUType = 15
+	SendDataRequest    PDUType = 25
+	SendDataIndication PDUType = 26
 )
 
 // MCS Channels
+
+type Channel uint16
+
 const (
-	MCSChannelUserIDBase = 1001
-	MCSChannelGlobal     = 1003
+	UserIDBase Channel = 1001
+	Global     Channel = 1003
 )

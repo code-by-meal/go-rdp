@@ -1,4 +1,4 @@
-package conn
+package nego
 
 type NegoType uint8
 

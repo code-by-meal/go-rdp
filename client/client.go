@@ -7,7 +7,7 @@ import (
 
 	"github.com/code-by-meal/go-rdp/core"
 	"github.com/code-by-meal/go-rdp/log"
-	"github.com/code-by-meal/go-rdp/stack/rdp/conn"
+	"github.com/code-by-meal/go-rdp/stack/rdp/nego"
 )
 
 type Client struct {
@@ -19,18 +19,20 @@ type Client struct {
 	Username         string
 	Password         string
 	Timeout          time.Duration
-	SelectedProtocol conn.NegoProtocol
+	SelectedProtocol nego.NegoProtocol
 	Width            uint32
 	Height           uint32
+	Hostname         string
 }
 
-func NewClient(ctx context.Context, host string, port uint16) *Client {
+func NewClient(ctx context.Context, host string, port uint16, hostname string) *Client {
 	log.Dbg("Init <d>rdp-client</>.")
 
 	return &Client{
-		Context: ctx,
-		Host:    host,
-		Port:    port,
+		Context:  ctx,
+		Host:     host,
+		Port:     port,
+		Hostname: hostname,
 	}
 }
 

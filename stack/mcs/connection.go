@@ -53,7 +53,7 @@ func (ci *ConnectInitial) Write(stream io.Writer) error {
 
 	buff1 := new(bytes.Buffer)
 
-	if err := ber.WriteApplicationTag(buff1, ber.Tag(MCSTypeConnectInitial), buff.Bytes()); err != nil {
+	if err := ber.WriteApplicationTag(buff1, ber.Tag(ConnectInitialM), buff.Bytes()); err != nil {
 		return fmt.Errorf(prefix, err)
 	}
 

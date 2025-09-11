@@ -32,6 +32,7 @@ type Session struct {
 	Domain   string
 	Host     string
 	Port     uint16
+	Hostname string
 	OS
 	OSVersion
 }
@@ -46,12 +47,12 @@ func main() {
 	sessions := []Session{
 		//Session{Host: "10.50.53.22", Port: 3389, Username: "admin1", Domain: "LAB1", Password: "ubuntu115!@#", OS: Windows, OSVersion: Windows7},
 		// Session{Host: "192.168.64.3", Port: 3389, Username: "user", Domain: "", Password: "user", OS: Windows, OSVersion: Windows11},
-		Session{Host: "172.16.0.19", Port: 3389, Username: "user", Domain: "", Password: "user", OS: Windows, OSVersion: Windows10},
+		Session{Host: "172.16.0.19", Hostname: "WIN-MACH", Port: 3389, Username: "user", Domain: "", Password: "user", OS: Windows, OSVersion: Windows10},
 	}
 	ctx := context.Background()
 
 	for _, session := range sessions {
-		client := client.NewClient(ctx, session.Host, session.Port)
+		client := client.NewClient(ctx, session.Host, session.Port, session.Hostname)
 		clientPrint := fmt.Sprintf("OS: <d>%s %s</> Host: <d>%s:%d</> Creds: <d>%s\\%s</>:<d>%s</>\t", string(session.OS), string(session.OSVersion), session.Host, session.Port, session.Domain, session.Username, session.Password)
 
 		if err := client.Login(session.Domain, session.Username, session.Password); err != nil {
