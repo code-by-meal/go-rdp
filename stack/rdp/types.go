@@ -5,11 +5,13 @@ package rdp
 type ClientHeaderType uint16
 
 const (
-	CoreC     ClientHeaderType = 0xC001
-	SecurityC ClientHeaderType = 0xC002
-	NetC      ClientHeaderType = 0xC003
-	ClusterC  ClientHeaderType = 0xC004
-	Monitor   ClientHeaderType = 0xC005
+	CoreC              ClientHeaderType = 0xC001
+	SecurityC          ClientHeaderType = 0xC002
+	NetC               ClientHeaderType = 0xC003
+	ClusterC           ClientHeaderType = 0xC004
+	Monitor            ClientHeaderType = 0xC005
+	MsgChannelData     ClientHeaderType = 0xC006
+	MultiTransportData ClientHeaderType = 0xC00A
 )
 
 // Server header types

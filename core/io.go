@@ -95,7 +95,7 @@ func Serialize(obj any) ([]byte, error) {
 					return buff.Bytes(), fmt.Errorf(prefix, err)
 				}
 			default:
-				log.Dbg(fmt.Sprintf("Try serialize <e>unexpected</> type.. Type: <d>%s</>", fieldV.Kind()))
+				log.Dbg(fmt.Sprintf("Try serialize <e>unexpected</> type.. <e>Type:</> <d>%s</>", fieldV.Kind()))
 			}
 		}
 	default:

@@ -5,6 +5,7 @@ import (
 	"io"
 
 	"github.com/code-by-meal/go-rdp/stack/gcc"
+	"github.com/code-by-meal/go-rdp/stack/rdp/nego"
 )
 
 type ClientDataRequest struct {
@@ -16,20 +17,23 @@ type ClientDataRequest struct {
 	ClientMultiTransportData
 }
 
-type ClientMsgChannelData struct{}
-
-type ClientMultiTransportData struct{}
-
-func NewClientDataRequest(hostname string) *ClientDataRequest {
+func NewClientDataRequest(hostname string, protocol nego.NegoProtocol) *ClientDataRequest {
 	ccd := _NewClientCoreData(hostname)
+	ccld := _NewClientClusterData()
+	csd := _NewClientSecurityData()
+	cnd := _NewClientNetworkData()
+	cmcd := _NewClientMsgChannelData()
+	cmtd := _NewClientMultiTransport()
+
+	ccd.ServerSelectedProtocol = protocol
 
 	return &ClientDataRequest{
 		ClientCoreData:           *ccd,
-		ClientClusterData:        ClientClusterData{},
-		ClientSecurityData:       ClientSecurityData{},
-		ClientNetworkData:        ClientNetworkData{},
-		ClientMsgChannelData:     ClientMsgChannelData{},
-		ClientMultiTransportData: ClientMultiTransportData{},
+		ClientClusterData:        *ccld,
+		ClientSecurityData:       *csd,
+		ClientNetworkData:        *cnd,
+		ClientMsgChannelData:     *cmcd,
+		ClientMultiTransportData: *cmtd,
 	}
 }
 
@@ -41,7 +45,45 @@ func (c *ClientDataRequest) Write(stream io.Writer) error {
 		return fmt.Errorf(prefix, err)
 	}
 
-	ccr := gcc.NewCCR(buffCCD.Bytes())
+	buffCCLD, err := c.ClientClusterData.Serialize()
+
+	if err != nil {
+		return fmt.Errorf(prefix, err)
+	}
+
+	buffCSD, err := c.ClientSecurityData.Serialize()
+
+	if err != nil {
+		return fmt.Errorf(prefix, err)
+	}
+
+	buffCND, err := c.ClientNetworkData.Serialize()
+
+	if err != nil {
+		return fmt.Errorf(prefix, err)
+	}
+
+	buffCMCD, err := c.ClientMsgChannelData.Serialize()
+
+	if err != nil {
+		return fmt.Errorf(prefix, err)
+	}
+
+	buffCMTD, err := c.ClientMultiTransportData.Serialize()
+
+	if err != nil {
+		return fmt.Errorf(prefix, err)
+	}
+
+	buff := []byte{}
+	buff = append(buff, buffCCD.Bytes()...)
+	buff = append(buff, buffCCLD.Bytes()...)
+	buff = append(buff, buffCSD.Bytes()...)
+	buff = append(buff, buffCND.Bytes()...)
+	buff = append(buff, buffCMCD.Bytes()...)
+	buff = append(buff, buffCMTD.Bytes()...)
+
+	ccr := gcc.NewCCR(buff)
 
 	if err := ccr.Write(stream); err != nil {
 		return fmt.Errorf(prefix, err)
