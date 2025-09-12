@@ -1,11 +1,13 @@
 package serverdata
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"io"
 
 	"github.com/code-by-meal/go-rdp/core"
+	"github.com/code-by-meal/go-rdp/stack/certs"
 	"github.com/code-by-meal/go-rdp/stack/gcc"
 	"github.com/code-by-meal/go-rdp/stack/rdp"
 )
@@ -100,6 +102,15 @@ func (r *Response) Read(stream io.Reader) error {
 
 			r.ServerSecurityData.ServerCertificate = cert
 
+			certificate, err := certs.NewCertificate(bytes.NewBuffer(r.ServerSecurityData.ServerCertificate))
+
+			if err != nil {
+				return fmt.Errorf(prefix, err)
+			}
+
+			if err := certificate.Proccess(); err != nil {
+				return fmt.Errorf(prefix, err)
+			}
 		case rdp.MsgChannelS:
 			if err := core.Unserialize(buff, &r.ServerMessageChannelData); err != nil {
 				return fmt.Errorf(prefix, err)
