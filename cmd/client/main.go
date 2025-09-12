@@ -46,8 +46,8 @@ func main() {
 
 	sessions := []Session{
 		//Session{Host: "10.50.53.22", Port: 3389, Username: "admin1", Domain: "LAB1", Password: "ubuntu115!@#", OS: Windows, OSVersion: Windows7},
-		// Session{Host: "192.168.64.3", Port: 3389, Username: "user", Domain: "", Password: "user", OS: Windows, OSVersion: Windows11},
-		Session{Host: "172.16.0.19", Hostname: "WIN-MACH", Port: 3389, Username: "user", Domain: "", Password: "user", OS: Windows, OSVersion: Windows10},
+		Session{Host: "192.168.64.3", Port: 3389, Hostname: "TEST-MACHINE", Username: "user", Domain: "", Password: "user", OS: Windows, OSVersion: Windows11},
+		//Session{Host: "172.16.0.19", Hostname: "WIN-MACH", Port: 3389, Username: "user", Domain: "", Password: "user", OS: Windows, OSVersion: Windows10},
 	}
 	ctx := context.Background()
 

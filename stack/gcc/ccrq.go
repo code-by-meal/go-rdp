@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/code-by-meal/go-rdp/log"
 	"github.com/code-by-meal/go-rdp/stack/mcs"
 	"github.com/code-by-meal/go-rdp/stack/mcs/per"
 )
@@ -27,10 +26,6 @@ func (c *ConferenceCreateRequest) Write(stream io.Writer) error {
 	if err != nil {
 		return fmt.Errorf(prefix, err)
 	}
-
-	log.Dbg(buff.Bytes())
-
-	log.Dbg([]byte(c.UserData))
 
 	ci := mcs.NewConnectInitial(buff.Bytes())
 

@@ -40,7 +40,7 @@ var (
 func _WriteHeader(pdu TypePDU, length int) ([]byte, error) {
 	prefix := "x224: get header: %w"
 
-	switch pdu {
+	switch pdu { // nolint
 	case DataPDU:
 		header := DataHeader{
 			Length:               2,
@@ -98,7 +98,7 @@ func Write(stream io.Writer, data *bytes.Buffer, pdu TypePDU) error {
 		return fmt.Errorf("x224: %w", err)
 	}
 
-	log.Dbg("<i>[X224-WRITE]</> ", buff.Bytes())
+	// log.Dbg("<i>[X224-WRITE]</> ", buff.Bytes())
 
 	if err := tpkt.Write(stream, buff); err != nil {
 		return fmt.Errorf("x224: %w", err)
@@ -142,7 +142,7 @@ func Read(stream io.Reader, pdu TypePDU) (*bytes.Buffer, error) {
 	default:
 	}
 
-	log.Dbg("<i>[X224-READ]</> ", buff.Bytes())
+	// log.Dbg("<i>[X224-READ]</> ", buff.Bytes())
 
 	return buff, nil
 }

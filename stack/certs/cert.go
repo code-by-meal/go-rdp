@@ -43,11 +43,11 @@ func NewCertificate(buff *bytes.Buffer) (*Certificate, error) {
 	case Version2:
 		c.TargetCertifacate = NewX509()
 
-		log.Dbg("<d>Certificate type</> : <i>X509</>")
+		log.Dbg("[<d>CERTIFICATE-TYPE</>: <i>X509</>]")
 	case Version1:
 		c.TargetCertifacate = NewPropietary()
 
-		log.Dbg("<d>Certificate type</> : <i>PROPIETARY</>")
+		log.Dbg("[<d>CERTIFICATE-TYPE</>: <i>PROPIETARY</>]")
 	default:
 		return nil, fmt.Errorf(prefix, fmt.Errorf("unknown version of certificate: %d", c.DwVersion))
 	}

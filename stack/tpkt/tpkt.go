@@ -33,8 +33,9 @@ func Write(stream io.Writer, buff *bytes.Buffer) error {
 
 	tpktPacket = append(tpktPacket, buff.Bytes()...)
 
-	log.Dbg("<i>[TPKT-HEADER]</> ", tpktHeader)
-	log.Dbg("<i>[TPKT-WRITE]</> ", tpktPacket)
+	_ = log.Level
+	//log.Dbg("<i>[TPKT-HEADER]</> ", tpktHeader)
+	//log.Dbg("<i>[TPKT-WRITE]</> ", tpktPacket)
 
 	if _, err := stream.Write(tpktPacket); err != nil {
 		return fmt.Errorf("tpkt: write buff: %w", err)
@@ -71,8 +72,8 @@ func Read(stream io.Reader) (*bytes.Buffer, error) {
 		return buff, fmt.Errorf("tpkt: write %w", err)
 	}
 
-	log.Dbg("<i>[TPKT-HEADER]</> ", tpktHeader)
-	log.Dbg("<i>[TPKT-READ]</> ", buff.Bytes())
+	// log.Dbg("<i>[TPKT-HEADER]</> ", tpktHeader)
+	// log.Dbg("<i>[TPKT-READ]</> ", buff.Bytes())
 
 	return buff, nil
 }

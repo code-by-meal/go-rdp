@@ -67,6 +67,10 @@ func (c *Client) Login(
 		return fmt.Errorf(prefix, err)
 	}
 
+	if err := c._ChannelConnection(); err != nil {
+		return fmt.Errorf(prefix, err)
+	}
+
 	return nil
 }
 

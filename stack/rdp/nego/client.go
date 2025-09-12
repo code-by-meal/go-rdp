@@ -6,7 +6,6 @@ import (
 	"io"
 
 	"github.com/code-by-meal/go-rdp/core"
-	"github.com/code-by-meal/go-rdp/log"
 	"github.com/code-by-meal/go-rdp/stack/x224"
 )
 
@@ -29,7 +28,7 @@ func (c *NegoRequest) Write(stream io.Writer) error {
 		return fmt.Errorf("nego req: %w", err)
 	}
 
-	log.Dbg("<i>[PDU-WRITE]</> ", packet)
+	// log.Dbg("<i>[PDU-WRITE]</> ", packet)
 
 	buff := bytes.NewBuffer(packet)
 

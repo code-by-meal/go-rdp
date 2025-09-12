@@ -5,15 +5,33 @@ import (
 
 	"github.com/code-by-meal/go-rdp/core"
 	"github.com/code-by-meal/go-rdp/log"
+	"github.com/code-by-meal/go-rdp/stack/mcs"
 	clientdata "github.com/code-by-meal/go-rdp/stack/rdp/client_data"
 	"github.com/code-by-meal/go-rdp/stack/rdp/nego"
 	serverdata "github.com/code-by-meal/go-rdp/stack/rdp/server_data"
 )
 
+func (c *Client) _ChannelConnection() error {
+	prefix := "auth: channel-connection: %w"
+
+	// Erect domain request
+	log.Zebra("[ERECT-DOMAIN-REQUEST]", log.SuccessColor)
+
+	edr := mcs.NewErrectDomainRequest()
+
+	if err := edr.Write(c.Stream); err != nil {
+		return fmt.Errorf(prefix, err)
+	}
+
+	return nil
+}
+
 func (c *Client) _BasicSettingExchange() error {
 	prefix := "basic set exchange: %w"
 
 	// Doing client data request
+	log.Zebra("[CLIENT-DATA-REQUEST]", log.SuccessColor)
+
 	cdr := clientdata.NewRequest(c.Hostname, c.SelectedProtocol)
 
 	if err := cdr.Write(c.Stream); err != nil {
@@ -21,6 +39,8 @@ func (c *Client) _BasicSettingExchange() error {
 	}
 
 	// Getting server data response
+	log.Zebra("[SERVER-DATA-RESPONSE]", log.SuccessColor)
+
 	sdr := serverdata.NewResponse()
 
 	if err := sdr.Read(c.Stream); err != nil {
@@ -38,7 +58,7 @@ func (c *Client) _Negotiation() error {
 
 	// Try to reconnect if server and client protocols wont mathcing
 	for {
-		log.Zebra(fmt.Sprintf("\n[NEGOTIATIOIN-CONNECTION-REQUEST] Try: %d", tryCount), log.SuccessColor)
+		log.Zebra(fmt.Sprintf("[NEGOTIATIOIN-CONNECTION-REQUEST] Try: %d", tryCount), log.SuccessColor)
 
 		negoReq := nego.NewNegoRequest(c.Username, requestedProtocols)
 
@@ -46,7 +66,7 @@ func (c *Client) _Negotiation() error {
 			return fmt.Errorf("nego con-req: %w", err)
 		}
 
-		log.Zebra(fmt.Sprintf("\n[NEGOTIATION-CONFIRM-RESPONSE] Try: %d", tryCount), log.SuccessColor)
+		log.Zebra(fmt.Sprintf("[NEGOTIATION-CONFIRM-RESPONSE] Try: %d", tryCount), log.SuccessColor)
 
 		negoRes := nego.NewNegoResponse()
 
