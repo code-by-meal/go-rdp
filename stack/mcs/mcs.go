@@ -16,11 +16,11 @@ type PDUType uint16
 const (
 	ErectDomainRequestT PDUType = 1
 	AttachUserRequestT  PDUType = 10
-	AttachUserConfirm   PDUType = 11
-	ChannelJoinRequest  PDUType = 14
-	ChannelJoinConfirm  PDUType = 15
-	SendDataRequest     PDUType = 25
-	SendDataIndication  PDUType = 26
+	AttachUserConfirmT  PDUType = 11
+	ChannelJoinRequestT PDUType = 14
+	ChannelJoinConfirmT PDUType = 15
+	SendDataRequestT    PDUType = 25
+	SendDataIndicationT PDUType = 26
 )
 
 // MCS Channels

@@ -32,6 +32,15 @@ func (c *Client) _ChannelConnection() error {
 		return fmt.Errorf(prefix, err)
 	}
 
+	// User attach confirm
+	log.Zebra("[USER-ATTACH-RESPONSE]", log.SuccessColor)
+
+	uac := mcs.NewAttachUserConfirm()
+
+	if err := uac.Read(c.Stream); err != nil {
+		return fmt.Errorf(prefix, err)
+	}
+
 	return nil
 }
 

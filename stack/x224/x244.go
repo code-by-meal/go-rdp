@@ -34,7 +34,8 @@ type DataHeader struct {
 }
 
 var (
-	HeaderLength = 7
+	HeaderLength     = 7
+	DataHeaderLength = 3
 )
 
 func _WriteHeader(pdu TypePDU, length int) ([]byte, error) {
@@ -114,13 +115,13 @@ func Read(stream io.Reader, pdu TypePDU) (*bytes.Buffer, error) {
 		return buff, fmt.Errorf("x224: %w", err)
 	}
 
-	if buff.Len() <= HeaderLength {
-		return buff, fmt.Errorf("x224: invalid packet length: %d", buff.Len())
-	}
-
 	switch pdu { // nolint
 	case ConnectionConfirmPDU:
 		var x224Header Header
+
+		if buff.Len() <= HeaderLength {
+			return buff, fmt.Errorf("x224: invalid packet length: %d", buff.Len())
+		}
 
 		if err := core.Unserialize(buff, &x224Header); err != nil {
 			return buff, fmt.Errorf("x224 unserialize: %w", err)
@@ -131,6 +132,10 @@ func Read(stream io.Reader, pdu TypePDU) (*bytes.Buffer, error) {
 		}
 	case DataPDU:
 		var x224Header DataHeader
+
+		if buff.Len() <= DataHeaderLength {
+			return buff, fmt.Errorf("x224: invalid packet length: %d", buff.Len())
+		}
 
 		if err := core.Unserialize(buff, &x224Header); err != nil {
 			return buff, fmt.Errorf("x224 unserialize: %w", err)
