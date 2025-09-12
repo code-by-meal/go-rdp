@@ -19,9 +19,9 @@ const (
 type ServerHeaderType uint16
 
 const (
-	CoreS          ServerHeaderType = 0x0C01
-	SecurityS      ServerHeaderType = 0x0C02
-	NetS           ServerHeaderType = 0x0C03
-	MsgChannel     ServerHeaderType = 0x0C04
-	MultyTransport ServerHeaderType = 0x0C08
+	CoreS           ServerHeaderType = 0x0C01
+	SecurityS       ServerHeaderType = 0x0C02
+	NetS            ServerHeaderType = 0x0C03
+	MsgChannelS     ServerHeaderType = 0x0C04
+	MultyTransportS ServerHeaderType = 0x0C08
 )

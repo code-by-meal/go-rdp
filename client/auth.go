@@ -5,9 +5,9 @@ import (
 
 	"github.com/code-by-meal/go-rdp/core"
 	"github.com/code-by-meal/go-rdp/log"
-	"github.com/code-by-meal/go-rdp/stack/gcc"
 	clientdata "github.com/code-by-meal/go-rdp/stack/rdp/client_data"
 	"github.com/code-by-meal/go-rdp/stack/rdp/nego"
+	serverdata "github.com/code-by-meal/go-rdp/stack/rdp/server_data"
 )
 
 func (c *Client) _BasicSettingExchange() error {
@@ -21,20 +21,11 @@ func (c *Client) _BasicSettingExchange() error {
 	}
 
 	// Getting server data response
+	sdr := serverdata.NewResponse()
 
-	// sdr := serverdata.NewResponse()
-	//
-	// if err := sdr.Write(c.Stream); err != nil {
-	// 	return fmt.Errorf(prefix, err)
-	// }
-	ccr := gcc.NewConfernceCreateResponse()
-	data, err := ccr.Read(c.Stream)
-
-	if err != nil {
+	if err := sdr.Read(c.Stream); err != nil {
 		return fmt.Errorf(prefix, err)
 	}
-
-	log.Dbg("<d>[MCS-RESPONSE-CONNECT]</> ", data.Bytes())
 
 	return nil
 }
