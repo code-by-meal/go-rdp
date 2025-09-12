@@ -92,5 +92,3 @@ func (c *ConferenceCreateRequest) Serialize() (*bytes.Buffer, error) {
 
 	return &buff, nil
 }
-
-type ConferenceCreateResponse struct{}

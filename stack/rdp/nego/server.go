@@ -18,7 +18,7 @@ func NewNegoResponse() *NegoResponse {
 }
 
 func (n *NegoResponse) Read(stream io.Reader) error {
-	buff, err := x224.Read(stream)
+	buff, err := x224.Read(stream, x224.ConnectionConfirmPDU)
 
 	if err != nil {
 		return fmt.Errorf("nego resp: %w", err)

@@ -170,7 +170,15 @@ func Unserialize(buff *bytes.Buffer, dst any) error {
 
 			fieldV.SetUint(order.Uint64(tmp[:]))
 		case reflect.String:
-			// implement
+		// implement
+		case reflect.Int:
+			var tmp [8]byte
+
+			order.PutUint32(tmp[:], uint32(fieldV.Int()))
+
+			if _, err := buff.Write(tmp[:]); err != nil {
+				return fmt.Errorf(prefix, err)
+			}
 		case reflect.Struct:
 			deepPtr := reflect.New(fieldV.Type())
 

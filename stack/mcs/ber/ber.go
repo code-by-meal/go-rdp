@@ -214,7 +214,7 @@ func WriteApplicationTag(stream io.Writer, tag Tag, v []byte) error {
 
 // BER Read functions
 
-func _ReadUniversalTag(stream io.Reader, tag Tag, pc bool) error {
+func ReadUniversalTag(stream io.Reader, tag Tag, pc bool) error {
 	var b uint8
 
 	msg := "ber: read ut: %w"
@@ -223,14 +223,14 @@ func _ReadUniversalTag(stream io.Reader, tag Tag, pc bool) error {
 		return fmt.Errorf(msg, err)
 	}
 
-	if tag != Tag(b) {
+	if b != (uint8(ClassUniv)|uint8(Pc(pc)))|(uint8(TagMask)&uint8(tag)) {
 		return fmt.Errorf("ber: read ut: invalid tag")
 	}
 
 	return nil
 }
 
-func _ReadLength(stream io.Reader) (int, error) {
+func ReadLength(stream io.Reader) (int, error) {
 	var size uint8
 
 	msg := "ber: read len: %w"
@@ -243,7 +243,7 @@ func _ReadLength(stream io.Reader) (int, error) {
 		return int(size), nil
 	}
 
-	switch size = size &^ 0x80; size {
+	switch size &^= 0x80; size {
 	case 1:
 		var value uint8
 
@@ -255,7 +255,7 @@ func _ReadLength(stream io.Reader) (int, error) {
 	case 2:
 		var value uint16
 
-		if err := core.ReadSingleAny(stream, &size, binary.BigEndian); err != nil {
+		if err := core.ReadSingleAny(stream, &value, binary.BigEndian); err != nil {
 			return 0, fmt.Errorf(msg, err)
 		}
 
@@ -268,11 +268,11 @@ func _ReadLength(stream io.Reader) (int, error) {
 func ReadInteger(stream io.Reader) (int, error) {
 	msg := "ber: read int: %w"
 
-	if err := _ReadUniversalTag(stream, TagInteger, false); err != nil {
+	if err := ReadUniversalTag(stream, TagInteger, false); err != nil {
 		return 0, fmt.Errorf(msg, err)
 	}
 
-	length, err := _ReadLength(stream)
+	length, err := ReadLength(stream)
 
 	if err != nil {
 		return 0, fmt.Errorf(msg, err)
@@ -322,11 +322,11 @@ func ReadInteger(stream io.Reader) (int, error) {
 func ReadEnumerated(stream io.Reader) (uint8, error) {
 	msg := "ber: read enum: %w"
 
-	if err := _ReadUniversalTag(stream, TagEnumerated, false); err != nil {
+	if err := ReadUniversalTag(stream, TagEnumerated, false); err != nil {
 		return 0, fmt.Errorf(msg, err)
 	}
 
-	length, err := _ReadLength(stream)
+	length, err := ReadLength(stream)
 
 	if err != nil {
 		return 0, fmt.Errorf(msg, err)
@@ -345,7 +345,7 @@ func ReadEnumerated(stream io.Reader) (uint8, error) {
 	return value, nil
 }
 
-func ReadApplication(stream io.Reader, tag Tag) ([]byte, error) {
+func ReadApplicationTag(stream io.Reader, tag Tag) ([]byte, error) {
 	var bb uint8
 
 	msg := "ber: read app: %w"
@@ -370,7 +370,7 @@ func ReadApplication(stream io.Reader, tag Tag) ([]byte, error) {
 		return []byte{}, fmt.Errorf(msg, fmt.Errorf("invalid tag: need %d get %d", tag, bb))
 	}
 
-	length, err := _ReadLength(stream)
+	length, err := ReadLength(stream)
 
 	if err != nil {
 		return []byte{}, fmt.Errorf(msg, err)
@@ -388,11 +388,11 @@ func ReadApplication(stream io.Reader, tag Tag) ([]byte, error) {
 func ReadDomainParameters(stream io.Reader) ([]byte, error) {
 	msg := "ber: read dp: %w"
 
-	if err := _ReadUniversalTag(stream, TagSequence, true); err != nil {
+	if err := ReadUniversalTag(stream, TagSequence, true); err != nil {
 		return []byte{}, fmt.Errorf(msg, err)
 	}
 
-	length, err := _ReadLength(stream)
+	length, err := ReadLength(stream)
 
 	if err != nil {
 		return []byte{}, fmt.Errorf(msg, err)

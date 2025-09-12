@@ -8,6 +8,6 @@ func NewResponse() *Response {
 	return &Response{}
 }
 
-func (r *Response) Write(stream io.Writer) error {
+func (r *Response) Read(stream io.Writer) error {
 	return nil
 }

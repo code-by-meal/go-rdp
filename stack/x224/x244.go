@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"unsafe"
 
 	"github.com/code-by-meal/go-rdp/core"
 	"github.com/code-by-meal/go-rdp/log"
@@ -108,39 +107,41 @@ func Write(stream io.Writer, data *bytes.Buffer, pdu TypePDU) error {
 	return nil
 }
 
-func Read(stream io.Reader) (*bytes.Buffer, error) {
+func Read(stream io.Reader, pdu TypePDU) (*bytes.Buffer, error) {
 	buff, err := tpkt.Read(stream)
 
 	if err != nil {
 		return buff, fmt.Errorf("x224: %w", err)
 	}
 
-	var x224Header Header
-
 	if buff.Len() <= HeaderLength {
 		return buff, fmt.Errorf("x224: invalid packet length: %d", buff.Len())
 	}
 
-	if err := core.Unserialize(buff, &x224Header); err != nil {
-		return buff, fmt.Errorf("x224 unserialize: %w", err)
-	}
-
-	switch x224Header.PDUType { // nolint
+	switch pdu { // nolint
 	case ConnectionConfirmPDU:
-		if x224Header.Length != uint8(buff.Len()+HeaderLength-1) {
-			log.Dbg("Header size: ", int(unsafe.Sizeof(x224Header)))
+		var x224Header Header
 
+		if err := core.Unserialize(buff, &x224Header); err != nil {
+			return buff, fmt.Errorf("x224 unserialize: %w", err)
+		}
+
+		if x224Header.Length != uint8(buff.Len()+HeaderLength-1) {
 			return buff, fmt.Errorf("x224: invalid header length: %d need: %d", x224Header.Length, HeaderLength)
 		}
 	case DataPDU:
+		var x224Header DataHeader
+
+		if err := core.Unserialize(buff, &x224Header); err != nil {
+			return buff, fmt.Errorf("x224 unserialize: %w", err)
+		}
+
 		if buff.Len() <= 3 || (x224Header.Length != 2 && x224Header.DestinationReference != 0x80) {
 			return buff, fmt.Errorf("x224: invalid header")
 		}
-
 	default:
 	}
 
-	log.Dbg("<i>[X224-HEADER]</> ", x224Header)
 	log.Dbg("<i>[X224-READ]</> ", buff.Bytes())
 
 	return buff, nil

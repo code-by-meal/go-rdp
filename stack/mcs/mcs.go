@@ -5,8 +5,8 @@ package mcs
 type Message uint8
 
 const (
-	ConnectInitialM Message = 0x65
-	ConnectResponse Message = 0x66
+	ConnectInitialM  Message = 0x65
+	ConnectResponseM Message = 0x66
 )
 
 // MCS PDU type
