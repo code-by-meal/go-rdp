@@ -108,7 +108,8 @@ func (r *Response) Read(stream io.Reader) error {
 				return fmt.Errorf(prefix, err)
 			}
 
-			if err := certificate.Proccess(); err != nil {
+			// Certificate check ... SKIP at the moment... TODO:
+			if err := certificate.TargetCertifacate.Read(bytes.NewBuffer(certificate.Raw)); err != nil {
 				return fmt.Errorf(prefix, err)
 			}
 		case rdp.MsgChannelS:
