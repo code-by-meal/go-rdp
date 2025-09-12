@@ -28,7 +28,7 @@ func (e *ErrectDomainRequest) Write(stream io.Writer) error {
 
 	prefix := "mcs: errect-domain: write: %w"
 
-	if err := per.WriteChoice(&buff, (byte(ErectDomainRequestT)<<2 | 0)); err != nil {
+	if err := per.WriteChoice(&buff, byte(ErectDomainRequestT)<<2); err != nil {
 		return fmt.Errorf(prefix, err)
 	}
 

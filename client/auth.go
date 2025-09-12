@@ -23,6 +23,15 @@ func (c *Client) _ChannelConnection() error {
 		return fmt.Errorf(prefix, err)
 	}
 
+	// User attach request
+	log.Zebra("[USER-ATTACH-REQUEST]", log.SuccessColor)
+
+	uar := mcs.NewAttachUserRequest()
+
+	if err := uar.Write(c.Stream); err != nil {
+		return fmt.Errorf(prefix, err)
+	}
+
 	return nil
 }
 
