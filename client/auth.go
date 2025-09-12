@@ -11,6 +11,34 @@ import (
 	serverdata "github.com/code-by-meal/go-rdp/stack/rdp/server_data"
 )
 
+func (c *Client) _JoinChannel(initiatorID, channelID uint16) error {
+	log.Zebra("[JOIN-CHANNEL-REQUEST]", log.SuccessColor)
+
+	prefix := "auth: join channel: %w"
+
+	// Join channel request
+	jcr := mcs.NewJoinChannelRequest(initiatorID, channelID)
+
+	if err := jcr.Write(c.Stream); err != nil {
+		return fmt.Errorf(prefix, err)
+	}
+
+	// Join channel confirm
+	log.Zebra("[JOIN-CHANNEL-CONFIRM]", log.SuccessColor)
+
+	jcc := mcs.NewJoinChannelConfirm()
+
+	if err := jcc.Read(c.Stream); err != nil {
+		return fmt.Errorf(prefix, err)
+	}
+
+	if jcc.UserID != c.UserID {
+		return fmt.Errorf(prefix, fmt.Errorf("invalid user id: %d != %d", jcc.UserID, c.UserID))
+	}
+
+	return nil
+}
+
 func (c *Client) _ChannelConnection() error {
 	prefix := "auth: channel-connection: %w"
 
@@ -41,6 +69,17 @@ func (c *Client) _ChannelConnection() error {
 		return fmt.Errorf(prefix, err)
 	}
 
+	c.UserID = uac.UserID
+
+	c.ChannelIDs = append(c.ChannelIDs, uint16(mcs.Global))
+	c.ChannelIDs = append(c.ChannelIDs, c.UserID)
+
+	for _, cid := range c.ChannelIDs {
+		if err := c._JoinChannel(c.UserID, cid); err != nil {
+			return fmt.Errorf(prefix, err)
+		}
+	}
+
 	return nil
 }
 
@@ -64,6 +103,8 @@ func (c *Client) _BasicSettingExchange() error {
 	if err := sdr.Read(c.Stream); err != nil {
 		return fmt.Errorf(prefix, err)
 	}
+
+	c.ChannelIDs = sdr.ServerNetworkData.ChannelIDArray
 
 	return nil
 }

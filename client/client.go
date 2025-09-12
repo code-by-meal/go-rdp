@@ -23,6 +23,8 @@ type Client struct {
 	Width            uint32
 	Height           uint32
 	Hostname         string
+	UserID           uint16
+	ChannelIDs       []uint16
 }
 
 func NewClient(ctx context.Context, host string, port uint16, hostname string) *Client {
