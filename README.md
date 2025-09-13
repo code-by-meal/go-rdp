@@ -20,6 +20,10 @@ sequenceDiagram
     RDP Server-->>RDP Client: Attach User Confirm (MCS/T-1.25)
     RDP Client->>RDP Server: Channel Join Request N-.. (MCS/T-1.25)
     RDP Server-->>RDP Client: Channel Join Confirm N-.. (MCS/T-1.25)
+
+    RDP Client->>RDP Server: Security Exchange - OPTIONAL (RDP/PDU)
+
+    RDP Client->>RDP Server: Client Info (RDP/PDU)
 ```
 
 # Usefull shorts
@@ -32,6 +36,7 @@ sequenceDiagram
 - `PER` Packed Encoding Rules 
 - `GCC` Generic Conference Control (`T.124`)
 - `RDP` Remote Desktop Protocol (`Top level abstraction of protocol.`)
+- `PDU` Protocol Data Unit 
 
 # TODO Authorization
 
