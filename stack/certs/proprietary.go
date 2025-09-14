@@ -73,13 +73,23 @@ func (x *ProprietaryCertificate) Serialize(buff io.Reader) error {
 		return fmt.Errorf(prefix, err)
 	}
 
-	modulus := make([]byte, x.PublicKeyBlob.KeyLen)
+	modLE, err := core.ReadFull(buff, int(x.PublicKeyBlob.KeyLen))
 
-	if err := binary.Read(buff, binary.LittleEndian, &modulus); err != nil {
+	if err != nil {
 		return fmt.Errorf(prefix, err)
 	}
 
-	x.PublicKeyBlob.Modulus = modulus
+	modBE := make([]byte, len(modLE))
+
+	for i := range modLE {
+		modBE[len(modLE)-1-i] = modLE[i]
+	}
+
+	for len(modBE) > 0 && modBE[0] == 0x0 {
+		modBE = modBE[1:]
+	}
+
+	x.PublicKeyBlob.Modulus = modBE
 
 	if err := core.ReadSingleAny(buff, &x.SignatureBlobType, binary.LittleEndian); err != nil {
 		return fmt.Errorf(prefix, err)
@@ -101,7 +111,7 @@ func (x *ProprietaryCertificate) Serialize(buff io.Reader) error {
 }
 
 func (x *ProprietaryCertificate) PublicKey() ([]byte, uint32) {
-	return []byte{}, 0
+	return x.PublicKeyBlob.Modulus, x.PublicKeyBlob.PubExp
 }
 
 func (x *ProprietaryCertificate) Read(buff io.Reader) error {
@@ -115,5 +125,5 @@ func (x *ProprietaryCertificate) Read(buff io.Reader) error {
 }
 
 func (x *ProprietaryCertificate) Verify() bool {
-	return false
+	return true
 }

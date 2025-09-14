@@ -7,24 +7,26 @@ import (
 
 	"github.com/code-by-meal/go-rdp/core"
 	"github.com/code-by-meal/go-rdp/log"
+	"github.com/code-by-meal/go-rdp/stack/certs"
 	"github.com/code-by-meal/go-rdp/stack/rdp/nego"
 )
 
 type Client struct {
-	Host             string
-	Port             uint16
-	Context          context.Context
-	Stream           *core.Stream
-	Domain           string
-	Username         string
-	Password         string
-	Timeout          time.Duration
-	SelectedProtocol nego.NegoProtocol
-	Width            uint32
-	Height           uint32
-	Hostname         string
-	UserID           uint16
-	ChannelIDs       []uint16
+	Host              string
+	Port              uint16
+	Context           context.Context
+	Stream            *core.Stream
+	Domain            string
+	Username          string
+	Password          string
+	Timeout           time.Duration
+	SelectedProtocol  nego.NegoProtocol
+	Width             uint32
+	Height            uint32
+	Hostname          string
+	UserID            uint16
+	ChannelIDs        []uint16
+	ServerCertificate *certs.Certificate
 }
 
 func NewClient(ctx context.Context, host string, port uint16, hostname string) *Client {
@@ -71,6 +73,12 @@ func (c *Client) Login(
 
 	if err := c._ChannelConnection(); err != nil {
 		return fmt.Errorf(prefix, err)
+	}
+
+	if c.SelectedProtocol == nego.RDP {
+		if err := c._SecurityCommencement(); err != nil {
+			return fmt.Errorf(prefix, err)
+		}
 	}
 
 	return nil

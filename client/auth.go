@@ -8,6 +8,7 @@ import (
 	"github.com/code-by-meal/go-rdp/stack/mcs"
 	clientdata "github.com/code-by-meal/go-rdp/stack/rdp/client_data"
 	"github.com/code-by-meal/go-rdp/stack/rdp/nego"
+	securityexchange "github.com/code-by-meal/go-rdp/stack/rdp/security_exchange"
 	serverdata "github.com/code-by-meal/go-rdp/stack/rdp/server_data"
 )
 
@@ -17,6 +18,15 @@ func (c *Client) _SecureSettingExchange() error {
 
 // If Selected Protocol -> RDPStandart
 func (c *Client) _SecurityCommencement() error {
+	log.Zebra("[SECURITY-EXCHANGE-REQUEST]", log.SuccessColor)
+
+	// Send Data PDU
+	se := securityexchange.NewRequest()
+
+	if err := se.Write(c.Stream, c.UserID, *c.ServerCertificate); err != nil {
+		return fmt.Errorf("sec comm: write: %w", err)
+	}
+
 	return nil
 }
 
@@ -109,11 +119,14 @@ func (c *Client) _BasicSettingExchange() error {
 
 	sdr := serverdata.NewResponse()
 
-	if err := sdr.Read(c.Stream); err != nil {
+	cert, err := sdr.Read(c.Stream)
+
+	if err != nil {
 		return fmt.Errorf(prefix, err)
 	}
 
 	c.ChannelIDs = sdr.ServerNetworkData.ChannelIDArray
+	c.ServerCertificate = cert
 
 	return nil
 }
