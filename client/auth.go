@@ -11,6 +11,15 @@ import (
 	serverdata "github.com/code-by-meal/go-rdp/stack/rdp/server_data"
 )
 
+func (c *Client) _SecureSettingExchange() error {
+	return nil
+}
+
+// If Selected Protocol -> RDPStandart
+func (c *Client) _SecurityCommencement() error {
+	return nil
+}
+
 func (c *Client) _JoinChannel(initiatorID, channelID uint16) error {
 	log.Zebra("[JOIN-CHANNEL-REQUEST]", log.SuccessColor)
 
