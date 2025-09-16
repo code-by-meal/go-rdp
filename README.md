@@ -46,9 +46,9 @@ sequenceDiagram
         [-] TLS
         [-] NLA
     [+] Basic settings exchange. (Without checking of certificate from server.)
-    [-] Channel connection.
-    [-] Security commencement.
-    [-] Secure settings exchange.
+    [+] Channel connection.
+    [+] Security commencement.
+    [+] Secure settings exchange.
     [-] Licensing.
     [-] Capabilities exchange.
     [-] Connection finalization.

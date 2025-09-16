@@ -1,9 +1,12 @@
 package clientinfo
 
 import (
+	"bytes"
+	"encoding/binary"
 	"fmt"
 	"io"
 
+	"github.com/code-by-meal/go-rdp/core"
 	"github.com/code-by-meal/go-rdp/stack/rdp/nego"
 	securitydata "github.com/code-by-meal/go-rdp/stack/rdp/security_data"
 	"github.com/code-by-meal/go-rdp/stack/sec"
@@ -44,12 +47,12 @@ const (
 )
 
 type ExtraInfo struct {
-	AddressFamily
+	AddressFamily               AddressFamily
 	CbClientAddress             uint16
 	ClientAddress               []byte
 	CbClientDir                 uint16
 	ClientDir                   []byte
-	ClientTimeZone              [172]byte
+	ClientTimeZone              []byte
 	ClientSessionID             uint32
 	PerformanceFlag             uint32
 	CbAutoReconnectCookie       uint16
@@ -77,18 +80,108 @@ type Request struct {
 	ExtraInfo
 }
 
-func NewRequest() *Request {
-	return &Request{}
+func (e *ExtraInfo) Serialize(buff *bytes.Buffer) error {
+	prefix := "extra info: serialize: %w"
+
+	values := []any{e.AddressFamily, e.CbClientAddress, e.ClientAddress, e.CbClientDir, e.ClientDir, e.ClientTimeZone, e.ClientSessionID, e.PerformanceFlag, e.CbAutoReconnectCookie, e.AutoReconnectCookie, e.Reserved1, e.Reserved2, e.CbDynamicDSTTimeZoneName, e.DynamicDSTTimeZoneName, e.DynamicDaylightTimeDisabled}
+
+	for _, v := range values {
+		switch vv := v.(type) {
+		case []byte:
+			if _, err := buff.Write(vv); err != nil {
+				return fmt.Errorf(prefix, err)
+			}
+		case uint16, uint32, uint8:
+			if err := core.WriteSingleAny(buff, &vv, binary.LittleEndian); err != nil {
+				return fmt.Errorf(prefix, err)
+			}
+		}
+	}
+
+	return nil
+}
+
+func (r *Request) Serialize(buff *bytes.Buffer) error {
+	prefix := "req serialize: %w"
+
+	values := []any{r.CodePage, r.Flag, r.CbDomain, r.CbUserName, r.Password, r.CbAlternateShell, r.CbWorkingDir}
+
+	for _, v := range values {
+		if err := core.WriteSingleAny(buff, &v, binary.LittleEndian); err != nil {
+			return fmt.Errorf(prefix, err)
+		}
+	}
+
+	arrays := [][]byte{r.Domain, r.UserName, r.Password, r.AlternateShell, r.WorkingDir}
+
+	for _, a := range arrays {
+		if _, err := buff.Write(a); err != nil {
+			return fmt.Errorf(prefix, err)
+		}
+	}
+
+	if err := r.ExtraInfo.Serialize(buff); err != nil {
+		return fmt.Errorf(prefix, err)
+	}
+
+	return nil
+}
+
+func NewRequest(
+	domain string,
+	username string,
+	password string,
+) *Request {
+	r := &Request{
+		Flag:           Mouse | Unicode | LogonErrors | LogonNotify | DisableCtrlAltDel | EnableWindowsKey | AutoLogon,
+		Domain:         []byte{0, 0},
+		UserName:       append(core.UTF16toLE(username), 0, 0),
+		Password:       append(core.UTF16toLE(password), 0, 0),
+		AlternateShell: []byte{0, 0},
+		WorkingDir:     []byte{0, 0},
+		ExtraInfo: ExtraInfo{
+			AddressFamily:            IPV4,
+			CbClientAddress:          2,
+			ClientAddress:            []byte{0, 0},
+			CbClientDir:              2,
+			ClientDir:                []byte{},
+			ClientTimeZone:           make([]byte, 172),
+			ClientSessionID:          0,
+			PerformanceFlag:          0,
+			CbAutoReconnectCookie:    2,
+			AutoReconnectCookie:      []byte{0, 0},
+			CbDynamicDSTTimeZoneName: 2,
+			DynamicDSTTimeZoneName:   []byte{0, 0},
+		},
+	}
+
+	if len(domain) != 0 {
+		r.Domain = append(core.UTF16toLE(domain), 0, 0)
+		r.CbDomain = uint16(len(r.Domain) - 2)
+	} else {
+		r.CbDomain = 2
+	}
+
+	r.CbUserName = uint16(len(r.UserName) - 2)
+	r.CbPassword = uint16(len(r.Password) - 2)
+
+	return r
 }
 
 func (r *Request) Write(stream io.Writer, proto nego.NegoProtocol, intiator uint16, sessionKeys *sec.SessionKey) error {
 	prefix := "rdp: client-info: write: %w"
 
+	var buff bytes.Buffer
+
+	if err := r.Serialize(&buff); err != nil {
+		return fmt.Errorf(prefix, err)
+	}
+
 	switch proto { // nolint
 	case nego.RDP:
 		r := securitydata.NewRequest(0x0848)
 
-		if err := r.Write(stream, intiator, sessionKeys, []byte("ENCRYPTED DATA")); err != nil {
+		if err := r.Write(stream, intiator, sessionKeys, buff.Bytes()); err != nil {
 			return fmt.Errorf(prefix, err)
 		}
 	default:
