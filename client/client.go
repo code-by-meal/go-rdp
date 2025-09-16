@@ -81,6 +81,10 @@ func (c *Client) Login(
 		}
 	}
 
+	if err := c._SecureSettingExchange(c.SelectedProtocol); err != nil {
+		return fmt.Errorf(prefix, err)
+	}
+
 	return nil
 }
 

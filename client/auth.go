@@ -7,12 +7,22 @@ import (
 	"github.com/code-by-meal/go-rdp/log"
 	"github.com/code-by-meal/go-rdp/stack/mcs"
 	clientdata "github.com/code-by-meal/go-rdp/stack/rdp/client_data"
+	clientinfo "github.com/code-by-meal/go-rdp/stack/rdp/client_info"
 	"github.com/code-by-meal/go-rdp/stack/rdp/nego"
 	securityexchange "github.com/code-by-meal/go-rdp/stack/rdp/security_exchange"
 	serverdata "github.com/code-by-meal/go-rdp/stack/rdp/server_data"
 )
 
-func (c *Client) _SecureSettingExchange() error {
+func (c *Client) _SecureSettingExchange(proto nego.NegoProtocol) error {
+	log.Zebra("[SECURE-SETTING-EXCHANGE]", log.SuccessColor)
+
+	// Client info request
+	cir := clientinfo.NewRequest()
+
+	if err := cir.Write(c.Stream, c.SelectedProtocol); err != nil {
+		return fmt.Errorf("sec sett exchange: %w", err)
+	}
+
 	return nil
 }
 
