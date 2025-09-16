@@ -17,7 +17,7 @@ func (c *Client) _SecureSettingExchange() error {
 	log.Zebra("[SECURE-SETTING-EXCHANGE]", log.SuccessColor)
 
 	// Client info request
-	cir := clientinfo.NewRequest()
+	cir := clientinfo.NewRequest(c.Domain, c.Username, c.Password)
 
 	if err := cir.Write(c.Stream, c.SelectedProtocol, c.UserID-uint16(mcs.UserIDBase), c.SessionKeys); err != nil {
 		return fmt.Errorf("sec sett exchange: %w", err)

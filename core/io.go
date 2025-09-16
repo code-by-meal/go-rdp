@@ -295,6 +295,10 @@ func WriteSingleAny(stream io.Writer, ptr any, order binary.ByteOrder) error {
 		if err := binary.Write(stream, order, uint64(v.Uint())); err != nil {
 			return fmt.Errorf(prefix, err)
 		}
+	case reflect.Interface:
+		ptr := v.Elem()
+
+		return WriteSingleAny(stream, ptr.Addr().Interface(), order)
 	default:
 		log.Info(fmt.Sprintf("<e>[UNIMPLEMENTED SINGLE TYPE]</> %s", v.Type()))
 	}

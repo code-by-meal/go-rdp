@@ -60,8 +60,6 @@ func (r *Request) Write(stream io.Writer, initiator uint16, sessionKey *sec.Sess
 		return fmt.Errorf(prefix, err)
 	}
 
-	fmt.Println(buff.Bytes())
-
 	return nil
 }
 
