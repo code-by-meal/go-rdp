@@ -89,14 +89,14 @@ func (c *Client) Login(
 
 		// FIXME: maybe need change the place of function FLOW
 		log.Zebra("[SESSION-KEYS]", log.InfoColor)
-		c.SessionKeys = sec.NewSessionKey()
+		c.SessionKeys = sec.NewSessionKey(c.EncryptMethod)
 
 		if err := c.SessionKeys.Calc(c.ClientRandom, c.ServerRandom); err != nil {
 			return fmt.Errorf(prefix, err)
 		}
 	}
 
-	if err := c._SecureSettingExchange(c.SelectedProtocol); err != nil {
+	if err := c._SecureSettingExchange(); err != nil {
 		return fmt.Errorf(prefix, err)
 	}
 

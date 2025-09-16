@@ -13,13 +13,13 @@ import (
 	serverdata "github.com/code-by-meal/go-rdp/stack/rdp/server_data"
 )
 
-func (c *Client) _SecureSettingExchange(proto nego.NegoProtocol) error {
+func (c *Client) _SecureSettingExchange() error {
 	log.Zebra("[SECURE-SETTING-EXCHANGE]", log.SuccessColor)
 
 	// Client info request
 	cir := clientinfo.NewRequest()
 
-	if err := cir.Write(c.Stream, c.SelectedProtocol); err != nil {
+	if err := cir.Write(c.Stream, c.SelectedProtocol, c.UserID-uint16(mcs.UserIDBase), c.SessionKeys); err != nil {
 		return fmt.Errorf("sec sett exchange: %w", err)
 	}
 
@@ -134,7 +134,6 @@ func (c *Client) _BasicSettingExchange() error {
 	if err := sdr.Read(c.Stream); err != nil {
 		return fmt.Errorf(prefix, err)
 	}
-
 	c.ChannelIDs = sdr.ServerNetworkData.ChannelIDArray
 	c.EncryptLevel = sdr.ServerSecurityData.EncryptionLevel
 	c.EncryptMethod = sdr.ServerSecurityData.EncryptionMethod

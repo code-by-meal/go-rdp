@@ -2,6 +2,7 @@ package sec
 
 import (
 	"bytes"
+	"crypto/hmac"
 	"crypto/md5"
 	"crypto/rc4"
 	"crypto/sha1"
@@ -20,8 +21,10 @@ type SessionKey struct {
 	EncryptMethod    serverdata.EncryptMethod
 }
 
-func NewSessionKey() *SessionKey {
-	sk := SessionKey{}
+func NewSessionKey(encryptMethod serverdata.EncryptMethod) *SessionKey {
+	sk := SessionKey{
+		EncryptMethod: encryptMethod,
+	}
 
 	return &sk
 }
@@ -42,6 +45,8 @@ func (s *SessionKey) Calc(clientRandom, serverRandom []byte) error {
 	copy(s.ClientDecryptKey[:], keyBlob)
 
 	switch s.EncryptMethod { // nolint
+	case serverdata.None | serverdata.One28BIT:
+		// skip
 	case serverdata.Four0BIT:
 		_Weaken56to40(s.ClientEncryptKey[:])
 		_Weaken56to40(s.ClientDecryptKey[:])
@@ -122,35 +127,16 @@ func _Weaken56to40(k []byte) {
 }
 
 func MAC8(macKey []byte, seq uint32, data []byte) [8]byte {
-	k := make([]byte, 64)
-
-	copy(k, macKey)
-
-	ipad := bytes.Repeat([]byte{0x36}, 64)
-	opad := bytes.Repeat([]byte{0x5c}, 64)
-
-	for i := 0; i < 64; i++ {
-		ipad[i] ^= k[i]
-	}
-
-	for i := 0; i < 64; i++ {
-		opad[i] ^= k[i]
-	}
-
 	var seqLE [4]byte
 
 	binary.LittleEndian.PutUint32(seqLE[:], seq)
 
-	md := md5.New()
-	md.Write(ipad)
-	md.Write(seqLE[:])
-	md.Write(data)
-	inner := md.Sum(nil)
+	h := hmac.New(md5.New, macKey)
 
-	md = md5.New()
-	md.Write(opad)
-	md.Write(inner)
-	sum := md.Sum(nil)
+	h.Write(seqLE[:])
+	h.Write(data)
+
+	sum := h.Sum(nil)
 
 	var out [8]byte
 

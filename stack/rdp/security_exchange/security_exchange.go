@@ -68,9 +68,7 @@ func (r *Request) Write(stream io.Writer, userID uint16, cert certs.Certificate)
 		return fmt.Errorf(prefix, err)
 	}
 
-	sdr := mcs.NewSendDataRequest(userID)
-
-	fmt.Println("Size of client random: ", len(enc))
+	sdr := mcs.NewSendDataRequest(userID - uint16(mcs.UserIDBase))
 
 	if err := sdr.Write(buff.Bytes(), stream); err != nil {
 		return fmt.Errorf(prefix, err)

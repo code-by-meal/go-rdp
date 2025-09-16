@@ -21,7 +21,7 @@ type SendDataRequest struct {
 
 func NewSendDataRequest(userID uint16) *SendDataRequest {
 	return &SendDataRequest{
-		InitiatorID:  userID - uint16(UserIDBase),
+		InitiatorID:  userID,
 		ChannelID:    uint16(Global),
 		DataPriority: 0x1,
 		Segmentation: 0xc0, // Priority + segmentation
