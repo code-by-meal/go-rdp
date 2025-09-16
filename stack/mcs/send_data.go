@@ -49,10 +49,6 @@ func (r *SendDataRequest) Write(userData []byte, stream io.Writer) error {
 		return fmt.Errorf(prefix, err)
 	}
 
-	// if err := buff.WriteByte((r.Segmentation & 0x03) << 6); err != nil {
-	// 	return fmt.Errorf(prefix, err)
-	// }
-
 	if err := per.WriteOctetString(&buff, string(userData), 0); err != nil {
 		return fmt.Errorf(prefix, err)
 	}

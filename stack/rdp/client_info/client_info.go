@@ -18,6 +18,7 @@ func (r *Request) Write(stream io.Writer, proto nego.NegoProtocol) error {
 
 	switch proto {
 	case nego.RDP:
+
 	case nego.Hybrid:
 	}
 

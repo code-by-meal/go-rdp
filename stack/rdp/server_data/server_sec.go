@@ -1,5 +1,7 @@
 package serverdata
 
+import "github.com/code-by-meal/go-rdp/stack/certs"
+
 // Encryption methods
 
 type EncryptMethod uint32
@@ -31,4 +33,5 @@ type SecurityData struct {
 	ServerCertLen     uint32        `order:"l"`
 	ServerRandom      []byte
 	ServerCertificate []byte
+	Certificate       *certs.Certificate
 }

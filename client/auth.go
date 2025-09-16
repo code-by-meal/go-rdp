@@ -37,6 +37,8 @@ func (c *Client) _SecurityCommencement() error {
 		return fmt.Errorf("sec comm: write: %w", err)
 	}
 
+	c.ClientRandom = se.EncryptedClientRandom
+
 	return nil
 }
 
@@ -129,14 +131,15 @@ func (c *Client) _BasicSettingExchange() error {
 
 	sdr := serverdata.NewResponse()
 
-	cert, err := sdr.Read(c.Stream)
-
-	if err != nil {
+	if err := sdr.Read(c.Stream); err != nil {
 		return fmt.Errorf(prefix, err)
 	}
 
 	c.ChannelIDs = sdr.ServerNetworkData.ChannelIDArray
-	c.ServerCertificate = cert
+	c.EncryptLevel = sdr.ServerSecurityData.EncryptionLevel
+	c.EncryptMethod = sdr.ServerSecurityData.EncryptionMethod
+	c.ServerCertificate = sdr.ServerSecurityData.Certificate
+	c.ServerRandom = sdr.ServerSecurityData.ServerRandom
 
 	return nil
 }

@@ -9,6 +9,8 @@ import (
 	"github.com/code-by-meal/go-rdp/log"
 	"github.com/code-by-meal/go-rdp/stack/certs"
 	"github.com/code-by-meal/go-rdp/stack/rdp/nego"
+	serverdata "github.com/code-by-meal/go-rdp/stack/rdp/server_data"
+	"github.com/code-by-meal/go-rdp/stack/sec"
 )
 
 type Client struct {
@@ -27,6 +29,11 @@ type Client struct {
 	UserID            uint16
 	ChannelIDs        []uint16
 	ServerCertificate *certs.Certificate
+	EncryptMethod     serverdata.EncryptMethod
+	EncryptLevel      serverdata.EncryptLevel
+	SessionKeys       *sec.SessionKey
+	ClientRandom      []byte
+	ServerRandom      []byte
 }
 
 func NewClient(ctx context.Context, host string, port uint16, hostname string) *Client {
@@ -77,6 +84,14 @@ func (c *Client) Login(
 
 	if c.SelectedProtocol == nego.RDP {
 		if err := c._SecurityCommencement(); err != nil {
+			return fmt.Errorf(prefix, err)
+		}
+
+		// FIXME: maybe need change the place of function FLOW
+		log.Zebra("[SESSION-KEYS]", log.InfoColor)
+		c.SessionKeys = sec.NewSessionKey()
+
+		if err := c.SessionKeys.Calc(c.ClientRandom, c.ServerRandom); err != nil {
 			return fmt.Errorf(prefix, err)
 		}
 	}

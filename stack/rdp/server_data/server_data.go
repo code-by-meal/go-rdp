@@ -35,22 +35,20 @@ func NewResponse() *Response {
 	}
 }
 
-func (r *Response) Read(stream io.Reader) (*certs.Certificate, error) {
-	cert := &certs.Certificate{}
-
+func (r *Response) Read(stream io.Reader) error {
 	prefix := "rdp: server-data: read: %w"
 	ccrsp := gcc.NewConfernceCreateResponse()
 	buff, err := ccrsp.Read(stream)
 
 	if err != nil {
-		return cert, fmt.Errorf(prefix, err)
+		return fmt.Errorf(prefix, err)
 	}
 
 	for {
 		header := Header{}
 
 		if err := core.Unserialize(buff, &header); err != nil && !errors.Is(err, io.EOF) {
-			return cert, fmt.Errorf(prefix, err)
+			return fmt.Errorf(prefix, err)
 		}
 
 		if header.Length <= 0 {
@@ -60,11 +58,11 @@ func (r *Response) Read(stream io.Reader) (*certs.Certificate, error) {
 		switch header.Type {
 		case rdp.CoreS:
 			if err := core.Unserialize(buff, &r.ServerCoreData); err != nil {
-				return cert, fmt.Errorf(prefix, err)
+				return fmt.Errorf(prefix, err)
 			}
 		case rdp.NetS:
 			if err := core.Unserialize(buff, &r.ServerNetworkData); err != nil {
-				return cert, fmt.Errorf(prefix, err)
+				return fmt.Errorf(prefix, err)
 			}
 
 			for i := 0; i < int(r.ServerNetworkData.ChannelCount); i++ {
@@ -73,14 +71,14 @@ func (r *Response) Read(stream io.Reader) (*certs.Certificate, error) {
 				}
 
 				if err := core.Unserialize(buff, &tmp); err != nil {
-					return cert, fmt.Errorf(prefix, err)
+					return fmt.Errorf(prefix, err)
 				}
 
 				r.ServerNetworkData.ChannelIDArray = append(r.ServerNetworkData.ChannelIDArray, tmp.ChannelID)
 			}
 		case rdp.SecurityS:
 			if err := core.Unserialize(buff, &r.ServerSecurityData); err != nil {
-				return cert, fmt.Errorf(prefix, err)
+				return fmt.Errorf(prefix, err)
 			}
 
 			if r.ServerSecurityData.EncryptionLevel == 0 || r.ServerSecurityData.EncryptionMethod == 0 {
@@ -90,7 +88,7 @@ func (r *Response) Read(stream io.Reader) (*certs.Certificate, error) {
 			random, err := core.ReadFull(buff, int(r.ServerSecurityData.ServerRandomLen))
 
 			if err != nil {
-				return cert, fmt.Errorf(prefix, err)
+				return fmt.Errorf(prefix, err)
 			}
 
 			r.ServerSecurityData.ServerRandom = random
@@ -98,35 +96,37 @@ func (r *Response) Read(stream io.Reader) (*certs.Certificate, error) {
 			certBytes, err := core.ReadFull(buff, int(r.ServerSecurityData.ServerCertLen))
 
 			if err != nil {
-				return cert, fmt.Errorf(prefix, err)
+				return fmt.Errorf(prefix, err)
 			}
 
 			r.ServerSecurityData.ServerCertificate = certBytes
 
-			cert, err = certs.NewCertificate(bytes.NewBuffer(r.ServerSecurityData.ServerCertificate))
+			cert, err := certs.NewCertificate(bytes.NewBuffer(r.ServerSecurityData.ServerCertificate))
 
 			if err != nil {
-				return cert, fmt.Errorf(prefix, err)
+				return fmt.Errorf(prefix, err)
 			}
 
 			// Certificate check ... SKIP at the moment... TODO:
 			if err := cert.TargetCertifacate.Read(bytes.NewBuffer(cert.Raw)); err != nil {
-				return cert, fmt.Errorf(prefix, err)
+				return fmt.Errorf(prefix, err)
 			}
+
+			r.ServerSecurityData.Certificate = cert
 		case rdp.MsgChannelS:
 			if err := core.Unserialize(buff, &r.ServerMessageChannelData); err != nil {
-				return cert, fmt.Errorf(prefix, err)
+				return fmt.Errorf(prefix, err)
 			}
 
 		case rdp.MultyTransportS:
 			if err := core.Unserialize(buff, &r.ServerMultitransportChannelData); err != nil {
-				return cert, fmt.Errorf(prefix, err)
+				return fmt.Errorf(prefix, err)
 			}
 
 		default:
-			return cert, fmt.Errorf(prefix, fmt.Errorf("unexpected server-data header-type: 0x%X", header.Type))
+			return fmt.Errorf(prefix, fmt.Errorf("unexpected server-data header-type: 0x%X", header.Type))
 		}
 	}
 
-	return cert, nil
+	return nil
 }
