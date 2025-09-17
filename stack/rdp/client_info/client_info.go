@@ -47,21 +47,21 @@ const (
 )
 
 type ExtraInfo struct {
-	AddressFamily   AddressFamily
-	CbClientAddress uint16
-	ClientAddress   []byte
-	CbClientDir     uint16
-	ClientDir       []byte
-	// ClientTimeZone  []byte
-	// ClientSessionID uint32
-	// PerformanceFlag uint32
-	// CbAutoReconnectCookie       uint16
-	// AutoReconnectCookie         []byte
-	// Reserved1                   uint16
-	// Reserved2                   uint16
-	// CbDynamicDSTTimeZoneName    uint16
-	// DynamicDSTTimeZoneName      []byte
-	// DynamicDaylightTimeDisabled uint16
+	AddressFamily               AddressFamily
+	CbClientAddress             uint16
+	ClientAddress               []byte
+	CbClientDir                 uint16
+	ClientDir                   []byte
+	ClientTimeZone              []byte
+	ClientSessionID             uint32
+	PerformanceFlag             uint32
+	CbAutoReconnectCookie       uint16
+	AutoReconnectCookie         []byte
+	Reserved1                   uint16
+	Reserved2                   uint16
+	CbDynamicDSTTimeZoneName    uint16
+	DynamicDSTTimeZoneName      []byte
+	DynamicDaylightTimeDisabled uint16
 }
 
 type Request struct {
@@ -83,7 +83,7 @@ type Request struct {
 func (e *ExtraInfo) Serialize(buff *bytes.Buffer) error {
 	prefix := "extra info: serialize: %w"
 
-	values := []any{e.AddressFamily, e.CbClientAddress, e.ClientAddress, e.CbClientDir, e.ClientDir}
+	values := []any{e.AddressFamily, e.CbClientAddress, e.ClientAddress, e.CbClientDir, e.ClientDir, e.ClientTimeZone, e.ClientSessionID, e.PerformanceFlag, e.CbAutoReconnectCookie}
 
 	for _, v := range values {
 		switch vv := v.(type) {
@@ -142,13 +142,13 @@ func NewRequest(
 		WorkingDir:     []byte{0, 0},
 		ExtraInfo: ExtraInfo{
 			AddressFamily:   IPV4,
-			CbClientAddress: 0,
+			CbClientAddress: 2,
 			ClientAddress:   []byte{0, 0},
-			CbClientDir:     0,
+			CbClientDir:     2,
 			ClientDir:       []byte{0, 0},
-			// ClientTimeZone:  make([]byte, 172),
-			// ClientSessionID: 0,
-			// PerformanceFlag: 0,
+			ClientTimeZone:  make([]byte, 172),
+			ClientSessionID: 0,
+			PerformanceFlag: 0,
 		},
 	}
 
