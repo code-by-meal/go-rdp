@@ -47,21 +47,21 @@ const (
 )
 
 type ExtraInfo struct {
-	AddressFamily               AddressFamily
-	CbClientAddress             uint16
-	ClientAddress               []byte
-	CbClientDir                 uint16
-	ClientDir                   []byte
-	ClientTimeZone              []byte
-	ClientSessionID             uint32
-	PerformanceFlag             uint32
-	CbAutoReconnectCookie       uint16
-	AutoReconnectCookie         []byte
-	Reserved1                   uint16
-	Reserved2                   uint16
-	CbDynamicDSTTimeZoneName    uint16
-	DynamicDSTTimeZoneName      []byte
-	DynamicDaylightTimeDisabled uint16
+	AddressFamily   AddressFamily
+	CbClientAddress uint16
+	ClientAddress   []byte
+	CbClientDir     uint16
+	ClientDir       []byte
+	// ClientTimeZone  []byte
+	// ClientSessionID uint32
+	// PerformanceFlag uint32
+	// CbAutoReconnectCookie       uint16
+	// AutoReconnectCookie         []byte
+	// Reserved1                   uint16
+	// Reserved2                   uint16
+	// CbDynamicDSTTimeZoneName    uint16
+	// DynamicDSTTimeZoneName      []byte
+	// DynamicDaylightTimeDisabled uint16
 }
 
 type Request struct {
@@ -83,7 +83,7 @@ type Request struct {
 func (e *ExtraInfo) Serialize(buff *bytes.Buffer) error {
 	prefix := "extra info: serialize: %w"
 
-	values := []any{e.AddressFamily, e.CbClientAddress, e.ClientAddress, e.CbClientDir, e.ClientDir, e.ClientTimeZone, e.ClientSessionID, e.PerformanceFlag, e.CbAutoReconnectCookie, e.AutoReconnectCookie, e.Reserved1, e.Reserved2, e.CbDynamicDSTTimeZoneName, e.DynamicDSTTimeZoneName, e.DynamicDaylightTimeDisabled}
+	values := []any{e.AddressFamily, e.CbClientAddress, e.ClientAddress, e.CbClientDir, e.ClientDir}
 
 	for _, v := range values {
 		switch vv := v.(type) {
@@ -91,11 +91,12 @@ func (e *ExtraInfo) Serialize(buff *bytes.Buffer) error {
 			if _, err := buff.Write(vv); err != nil {
 				return fmt.Errorf(prefix, err)
 			}
-		case uint16, uint32, uint8:
+		case uint16, uint32, uint8, AddressFamily:
 			if err := core.WriteSingleAny(buff, &vv, binary.LittleEndian); err != nil {
 				return fmt.Errorf(prefix, err)
 			}
 		}
+
 	}
 
 	return nil
@@ -104,7 +105,7 @@ func (e *ExtraInfo) Serialize(buff *bytes.Buffer) error {
 func (r *Request) Serialize(buff *bytes.Buffer) error {
 	prefix := "req serialize: %w"
 
-	values := []any{r.CodePage, r.Flag, r.CbDomain, r.CbUserName, r.Password, r.CbAlternateShell, r.CbWorkingDir}
+	values := []any{r.CodePage, r.Flag, r.CbDomain, r.CbUserName, r.CbPassword, r.CbAlternateShell, r.CbWorkingDir}
 
 	for _, v := range values {
 		if err := core.WriteSingleAny(buff, &v, binary.LittleEndian); err != nil {
@@ -140,26 +141,20 @@ func NewRequest(
 		AlternateShell: []byte{0, 0},
 		WorkingDir:     []byte{0, 0},
 		ExtraInfo: ExtraInfo{
-			AddressFamily:            IPV4,
-			CbClientAddress:          2,
-			ClientAddress:            []byte{0, 0},
-			CbClientDir:              2,
-			ClientDir:                []byte{},
-			ClientTimeZone:           make([]byte, 172),
-			ClientSessionID:          0,
-			PerformanceFlag:          0,
-			CbAutoReconnectCookie:    2,
-			AutoReconnectCookie:      []byte{0, 0},
-			CbDynamicDSTTimeZoneName: 2,
-			DynamicDSTTimeZoneName:   []byte{0, 0},
+			AddressFamily:   IPV4,
+			CbClientAddress: 0,
+			ClientAddress:   []byte{0, 0},
+			CbClientDir:     0,
+			ClientDir:       []byte{0, 0},
+			// ClientTimeZone:  make([]byte, 172),
+			// ClientSessionID: 0,
+			// PerformanceFlag: 0,
 		},
 	}
 
 	if len(domain) != 0 {
 		r.Domain = append(core.UTF16toLE(domain), 0, 0)
 		r.CbDomain = uint16(len(r.Domain) - 2)
-	} else {
-		r.CbDomain = 2
 	}
 
 	r.CbUserName = uint16(len(r.UserName) - 2)
@@ -176,6 +171,8 @@ func (r *Request) Write(stream io.Writer, proto nego.NegoProtocol, intiator uint
 	if err := r.Serialize(&buff); err != nil {
 		return fmt.Errorf(prefix, err)
 	}
+
+	fmt.Println("Len: ", len(buff.Bytes()), "Client Info: ", buff.Bytes())
 
 	switch proto { // nolint
 	case nego.RDP:

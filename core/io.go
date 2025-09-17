@@ -298,6 +298,16 @@ func WriteSingleAny(stream io.Writer, ptr any, order binary.ByteOrder) error {
 	case reflect.Interface:
 		ptr := v.Elem()
 
+		if !ptr.IsValid() {
+			return fmt.Errorf(prefix, fmt.Errorf("invalid interface"))
+		}
+
+		if !ptr.CanAddr() {
+			box := reflect.New(ptr.Type())
+			box.Elem().Set(ptr)
+			ptr = box.Elem()
+		}
+
 		return WriteSingleAny(stream, ptr.Addr().Interface(), order)
 	default:
 		log.Info(fmt.Sprintf("<e>[UNIMPLEMENTED SINGLE TYPE]</> %s", v.Type()))
