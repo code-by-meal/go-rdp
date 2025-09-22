@@ -42,7 +42,7 @@ func (c *Client) _SecurityCommencement() error {
 	// Send Data PDU
 	se := securityexchange.NewRequest()
 
-	if err := se.Write(c.Stream, c.UserID, *c.ServerCertificate); err != nil {
+	if err := se.Write(c.Stream, c.UserID-uint16(mcs.UserIDBase), *c.ServerCertificate); err != nil {
 		return fmt.Errorf("sec comm: write: %w", err)
 	}
 

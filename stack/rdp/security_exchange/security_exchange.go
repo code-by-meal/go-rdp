@@ -68,7 +68,7 @@ func (r *Request) Write(stream io.Writer, userID uint16, cert certs.Certificate)
 		return fmt.Errorf(prefix, err)
 	}
 
-	sdr := mcs.NewSendDataRequest(userID - uint16(mcs.UserIDBase))
+	sdr := mcs.NewSendDataRequest(userID)
 
 	if err := sdr.Write(buff.Bytes(), stream); err != nil {
 		return fmt.Errorf(prefix, err)
