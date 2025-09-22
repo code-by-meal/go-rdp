@@ -92,6 +92,20 @@ func _ProccessArgs(prefix string, argn ...any) {
 	fmt.Print("\n")
 }
 
+func UTF16LE(title string, data []byte) {
+	fmt.Printf(_Colorize(fmt.Sprintf("<i>%s</>: [<i>LENGTH</>: <d>%d</>]", title, len(data))))
+
+	for _, b := range data[:len(data)-2] {
+		if b != 0 {
+			fmt.Printf(_Colorize(fmt.Sprintf("<i>%s</>", string(b))))
+		} else {
+			fmt.Printf(".")
+		}
+	}
+
+	fmt.Printf(_Colorize("<e>..</>\n"))
+}
+
 func Zebra(text string, color COLOR) {
 	for i, s := range []byte(text) {
 		if i%2 == 0 {

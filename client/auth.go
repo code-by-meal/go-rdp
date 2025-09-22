@@ -2,6 +2,7 @@ package client
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/code-by-meal/go-rdp/core"
 	"github.com/code-by-meal/go-rdp/log"
@@ -17,7 +18,15 @@ func (c *Client) _SecureSettingExchange() error {
 	log.Zebra("[SECURE-SETTING-EXCHANGE]", log.SuccessColor)
 
 	// Client info request
-	cir := clientinfo.NewRequest(c.Domain, c.Username, c.Password)
+	ip := c.Stream.Conn.LocalAddr().String()
+
+	if strings.Contains(ip, ":") {
+		ip = strings.Split(ip, ":")[0]
+	}
+
+	log.Dbg(fmt.Sprintf("[<i>LOCAL IP</> : <d>%s</>]", ip))
+
+	cir := clientinfo.NewRequest(ip, c.Domain, c.Username, c.Password)
 
 	if err := cir.Write(c.Stream, c.SelectedProtocol, c.UserID-uint16(mcs.UserIDBase), c.SessionKeys); err != nil {
 		return fmt.Errorf("sec sett exchange: %w", err)
@@ -139,6 +148,9 @@ func (c *Client) _BasicSettingExchange() error {
 	c.EncryptMethod = sdr.ServerSecurityData.EncryptionMethod
 	c.ServerCertificate = sdr.ServerSecurityData.Certificate
 	c.ServerRandom = sdr.ServerSecurityData.ServerRandom
+
+	log.Dbg(fmt.Sprintf("[<d>ENCRYPT-LEVEL</>: <i>%d</>]", c.EncryptLevel))
+	log.Dbg(fmt.Sprintf("[<d>ENCRYPT-METHOD</>: <i>%d</>]", c.EncryptMethod))
 
 	return nil
 }
