@@ -12,6 +12,12 @@ import (
 	serverdata "github.com/code-by-meal/go-rdp/stack/rdp/server_data"
 )
 
+var (
+	A  = []byte("A")
+	BB = []byte("BB")
+	CC = []byte("CCC")
+)
+
 type SessionKey struct {
 	MAC8             [16]byte
 	ClientEncryptKey [8]byte

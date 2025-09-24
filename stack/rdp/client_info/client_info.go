@@ -240,8 +240,6 @@ func (r *Request) Write(stream io.Writer, proto nego.NegoProtocol, intiator uint
 		return fmt.Errorf(prefix, err)
 	}
 
-	fmt.Println("Len: ", len(buff.Bytes()), "Client Info: ", buff.Bytes())
-
 	switch proto { // nolint
 	case nego.RDP:
 		r := securitydata.NewRequest(0x0848)

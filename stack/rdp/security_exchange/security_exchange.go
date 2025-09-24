@@ -3,7 +3,7 @@ package securityexchange
 import (
 	"bytes"
 	"crypto/rand"
-	"crypto/rsa"
+	"encoding/binary"
 	"fmt"
 	"io"
 	"math/big"
@@ -28,29 +28,13 @@ func NewRequest() *Request {
 }
 
 func (r *Request) Write(stream io.Writer, userID uint16, cert certs.Certificate) error {
-	modulus, exp := cert.TargetCertifacate.PublicKey()
 	prefix := "rdp: sec-exchange: write: %w"
 
-	if len(modulus) == 0 || exp == 0 {
-		return fmt.Errorf(prefix, fmt.Errorf("empty rsa key"))
-	}
-
-	n := new(big.Int).SetBytes(modulus)
-	publicKey := &rsa.PublicKey{N: n, E: int(exp)}
-	clientRandom := make([]byte, 32)
-
-	if _, err := rand.Read(clientRandom); err != nil {
+	if err := r.PrepareEncryptedClientRandom(cert); err != nil {
 		return fmt.Errorf(prefix, err)
 	}
 
-	enc, err := rsa.EncryptPKCS1v15(rand.Reader, publicKey, clientRandom)
-
-	if err != nil {
-		return fmt.Errorf(prefix, err)
-	}
-
-	r.Length = uint32(len(enc))
-	r.EncryptedClientRandom = enc
+	r.Length = uint32(len(r.EncryptedClientRandom) + 8)
 
 	var buff bytes.Buffer
 
@@ -64,7 +48,11 @@ func (r *Request) Write(stream io.Writer, userID uint16, cert certs.Certificate)
 		return fmt.Errorf(prefix, err)
 	}
 
-	if _, err := buff.Write(r.EncryptedClientRandom); err != nil {
+	if err := binary.Write(&buff, binary.LittleEndian, r.EncryptedClientRandom); err != nil {
+		return fmt.Errorf(prefix, err)
+	}
+
+	if _, err := buff.Write(make([]byte, 8)); err != nil {
 		return fmt.Errorf(prefix, err)
 	}
 
@@ -73,6 +61,45 @@ func (r *Request) Write(stream io.Writer, userID uint16, cert certs.Certificate)
 	if err := sdr.Write(buff.Bytes(), stream); err != nil {
 		return fmt.Errorf(prefix, err)
 	}
+
+	return nil
+}
+
+func (r *Request) PrepareEncryptedClientRandom(cert certs.Certificate) error {
+	prefix := "sec exhacnge: encr client random: %w"
+
+	// Getting income data from server sertificate
+	modulus, E := cert.TargetCertifacate.PublicKey()
+
+	if len(modulus) == 0 || E == 0 {
+		return fmt.Errorf(prefix, fmt.Errorf("invalid rsa key: exp=%d len(mod)=%d", E, len(modulus)))
+	}
+
+	modulus = bytes.TrimRight(modulus, "\x00")
+	modulusLen := len(modulus)
+
+	// Forming client random
+	clientRandom := make([]byte, 32)
+
+	if _, err := rand.Read(clientRandom); err != nil {
+		return fmt.Errorf(prefix, err)
+	}
+
+	// Preparing income args
+	modulus = core.Reverse(modulus)
+
+	N := new(big.Int).SetBytes(modulus)
+	m := make([]byte, modulusLen)
+
+	copy(m, clientRandom)
+
+	m = core.Reverse(m)
+	M := new(big.Int).SetBytes(m)
+
+	// ClientRandom (LE->BE->big.Int) ^ E mod Modulus (LE->BE->big.Int) = Result (big.Int->BE->LE)
+	C := new(big.Int).Exp(M, big.NewInt(int64(E)), N)
+
+	r.EncryptedClientRandom = core.Reverse(C.FillBytes(make([]byte, modulusLen)))
 
 	return nil
 }

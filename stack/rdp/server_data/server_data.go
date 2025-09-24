@@ -77,29 +77,13 @@ func (r *Response) Read(stream io.Reader) error {
 				r.ServerNetworkData.ChannelIDArray = append(r.ServerNetworkData.ChannelIDArray, tmp.ChannelID)
 			}
 		case rdp.SecurityS:
-			if err := core.Unserialize(buff, &r.ServerSecurityData); err != nil {
+			if err := r.ServerSecurityData.Read(buff); err != nil {
 				return fmt.Errorf(prefix, err)
 			}
 
-			if r.ServerSecurityData.EncryptionLevel == 0 || r.ServerSecurityData.EncryptionMethod == 0 {
+			if r.ServerSecurityData.EncryptionLevel == LevelNone {
 				continue
 			}
-
-			random, err := core.ReadFull(buff, int(r.ServerSecurityData.ServerRandomLen))
-
-			if err != nil {
-				return fmt.Errorf(prefix, err)
-			}
-
-			r.ServerSecurityData.ServerRandom = random
-
-			certBytes, err := core.ReadFull(buff, int(r.ServerSecurityData.ServerCertLen))
-
-			if err != nil {
-				return fmt.Errorf(prefix, err)
-			}
-
-			r.ServerSecurityData.ServerCertificate = certBytes
 
 			cert, err := certs.NewCertificate(bytes.NewBuffer(r.ServerSecurityData.ServerCertificate))
 

@@ -1,11 +1,12 @@
 package certs
 
 import (
+	"bytes"
 	"encoding/binary"
 	"fmt"
-	"io"
 
 	"github.com/code-by-meal/go-rdp/core"
+	"github.com/code-by-meal/go-rdp/log"
 )
 
 type RSAPublicKey struct {
@@ -34,7 +35,17 @@ func NewPropietary() *ProprietaryCertificate {
 	}
 }
 
-func (x *ProprietaryCertificate) Serialize(buff io.Reader) error {
+func Log(p any, title string) {
+	buff := bytes.NewBuffer([]byte{})
+
+	if err := core.WriteSingleAny(buff, &p, binary.BigEndian); err != nil {
+		log.Err("LOG: ", err)
+	}
+
+	log.Dbg(fmt.Sprintf("<s>%s</>", title), buff.Bytes())
+}
+
+func (x *ProprietaryCertificate) Serialize(buff *bytes.Buffer) error {
 	prefix := "serialize cert: %w"
 
 	if err := core.ReadSingleAny(buff, &x.DwSigAlgID, binary.LittleEndian); err != nil {
@@ -73,23 +84,13 @@ func (x *ProprietaryCertificate) Serialize(buff io.Reader) error {
 		return fmt.Errorf(prefix, err)
 	}
 
-	modLE, err := core.ReadFull(buff, int(x.PublicKeyBlob.KeyLen))
+	modulus, err := core.ReadFull(buff, int(x.PublicKeyBlob.KeyLen))
 
 	if err != nil {
 		return fmt.Errorf(prefix, err)
 	}
 
-	modBE := make([]byte, len(modLE))
-
-	for i := range modLE {
-		modBE[len(modLE)-1-i] = modLE[i]
-	}
-
-	for len(modBE) > 0 && modBE[0] == 0x0 {
-		modBE = modBE[1:]
-	}
-
-	x.PublicKeyBlob.Modulus = modBE
+	x.PublicKeyBlob.Modulus = modulus
 
 	if err := core.ReadSingleAny(buff, &x.SignatureBlobType, binary.LittleEndian); err != nil {
 		return fmt.Errorf(prefix, err)
@@ -107,6 +108,22 @@ func (x *ProprietaryCertificate) Serialize(buff io.Reader) error {
 
 	x.SignatureBlob = blob
 
+	// Log(x.DwSigAlgID, "DwSigAlgID:")
+	// Log(x.DwKeyAlgID, "DwKeyAlgID:")
+	// Log(x.PublicKeyBlobType, "PublicKeyBlobType:")
+	// Log(x.PublicKeyBlobLen, "PublicKeyBlobLen:")
+
+	// Log(x.PublicKeyBlob.Magic, "PK-Magic:")
+	// Log(x.PublicKeyBlob.KeyLen, "PK-Keylen:")
+	// Log(x.PublicKeyBlob.BitLen, "PK-Bitlen:")
+	// Log(x.PublicKeyBlob.DataLen, "PK-Datalen:")
+	// Log(x.PublicKeyBlob.PubExp, "PK-Exp:")
+	// log.Dbg("<s>Modulus:</>", x.PublicKeyBlob.Modulus)
+
+	// Log(x.SignatureBlobType, "SignatureBlobType:")
+	// Log(x.SignatureBlobLen, "SignatureBlobLen:")
+	// log.Dbg("<s>Signature Blob:</>", x.SignatureBlob)
+
 	return nil
 }
 
@@ -114,7 +131,7 @@ func (x *ProprietaryCertificate) PublicKey() ([]byte, uint32) {
 	return x.PublicKeyBlob.Modulus, x.PublicKeyBlob.PubExp
 }
 
-func (x *ProprietaryCertificate) Read(buff io.Reader) error {
+func (x *ProprietaryCertificate) Read(buff *bytes.Buffer) error {
 	prefix := "proprietary: read: %w"
 
 	if err := x.Serialize(buff); err != nil {

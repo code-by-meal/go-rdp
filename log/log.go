@@ -75,7 +75,7 @@ func _ProccessArgs(prefix string, argn ...any) {
 					start = "<i>"
 				}
 
-				fmt.Print(_Colorize(start + fmt.Sprintf("%02d ", b) + "</>"))
+				fmt.Print(_Colorize(start + fmt.Sprintf("0x%02X ", b) + "</>"))
 			}
 		case byte:
 			fmt.Print(_Colorize(fmt.Sprintf("<d>BYTE:</> <i>%d</>", v)))

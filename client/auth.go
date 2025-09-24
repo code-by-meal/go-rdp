@@ -149,8 +149,8 @@ func (c *Client) _BasicSettingExchange() error {
 	c.ServerCertificate = sdr.ServerSecurityData.Certificate
 	c.ServerRandom = sdr.ServerSecurityData.ServerRandom
 
-	log.Dbg(fmt.Sprintf("[<d>ENCRYPT-LEVEL</>: <i>%d</>]", c.EncryptLevel))
-	log.Dbg(fmt.Sprintf("[<d>ENCRYPT-METHOD</>: <i>%d</>]", c.EncryptMethod))
+	log.Dbg(fmt.Sprintf("[<d>ENCRYPT-LEVEL</>: <i>%s</>]", c.EncryptLevel.Name()))
+	log.Dbg(fmt.Sprintf("[<d>ENCRYPT-METHOD</>: <i>%s</>]", c.EncryptMethod.Name()))
 
 	return nil
 }

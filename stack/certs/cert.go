@@ -3,7 +3,6 @@ package certs
 import (
 	"bytes"
 	"fmt"
-	"io"
 
 	"github.com/code-by-meal/go-rdp/core"
 	"github.com/code-by-meal/go-rdp/log"
@@ -20,7 +19,7 @@ const (
 type Cert interface {
 	Verify() bool
 	PublicKey() ([]byte, uint32)
-	Read(io.Reader) error
+	Read(*bytes.Buffer) error
 }
 
 type Certificate struct {
