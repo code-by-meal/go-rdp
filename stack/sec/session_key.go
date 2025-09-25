@@ -5,6 +5,7 @@ import (
 	"crypto/sha1"
 	"fmt"
 
+	"github.com/code-by-meal/go-rdp/core"
 	"github.com/code-by-meal/go-rdp/log"
 	serverdata "github.com/code-by-meal/go-rdp/stack/rdp/server_data"
 )
@@ -31,11 +32,14 @@ type SessionKeys struct {
 	DecryptKey              []byte // 16 bytes
 	UpdateEncryptKey        []byte // 16 bytes
 	UpdateDecryptKey        []byte // 16 bytes
+	Padding1                []byte // 40 bytes with \x36
+	Padding2                []byte // 48 bytes with \x5c
 	RC4KeyLen               int
 	DecryptUseCount         int
 	DecryptChecksumUseCount int
 	EncryptUseCount         int
 	EncryptChecksumUseCount int
+	// Every 4096 packets keys need be updated
 }
 
 func NewSessionKey(encryptMethod serverdata.EncryptMethod, clientRandom, serverRandom []byte) (*SessionKeys, error) {
@@ -55,6 +59,35 @@ func NewSessionKey(encryptMethod serverdata.EncryptMethod, clientRandom, serverR
 		EncryptChecksumUseCount: 0,
 		EncryptUseCount:         0,
 	}, nil
+}
+
+func (s *SessionKeys) UpdateKey() error {
+	return fmt.Errorf("not implemented!")
+}
+
+func (s *SessionKeys) SaltedMACSignature(data []byte) ([]byte, error) {
+	prefix := "ses keys: salt mac sign: %w"
+	s1 := sha1.New()
+
+	for _, arr := range [][]byte{s.SignKey[:s.RC4KeyLen], s.Padding1, core.U32ToLE(uint32(len(data))), data, core.U32ToLE(uint32(s.EncryptChecksumUseCount))} {
+		if _, err := s1.Write(arr); err != nil {
+			return []byte{}, fmt.Errorf(prefix, err)
+		}
+	}
+
+	m5 := md5.New()
+
+	for _, arr := range [][]byte{s.SignKey, s.Padding2, s1.Sum(nil)} {
+		if _, err := m5.Write(arr); err != nil {
+			return []byte{}, fmt.Errorf(prefix, err)
+		}
+	}
+
+	return m5.Sum(nil)[:8], nil
+}
+
+func (s *SessionKeys) MACSignature() error {
+	return nil
 }
 
 func (s *SessionKeys) Calc() error {
@@ -146,6 +179,19 @@ func (s *SessionKeys) EstablishKeys() error {
 
 	case serverdata.One28BIT:
 		s.RC4KeyLen = 16
+	}
+
+	// Setting paddings
+	s.Padding1 = make([]byte, 40)
+
+	for i := range 40 {
+		s.Padding1[i] = 0x36
+	}
+
+	s.Padding2 = make([]byte, 48)
+
+	for i := range 48 {
+		s.Padding2[i] = 0x5c
 	}
 
 	return nil

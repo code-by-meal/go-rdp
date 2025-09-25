@@ -315,3 +315,14 @@ func WriteSingleAny(stream io.Writer, ptr any, order binary.ByteOrder) error {
 
 	return nil
 }
+
+func U32ToLE(v uint32) []byte {
+	var out [4]byte
+
+	out[0] = byte(v & 0xFF)
+	out[1] = byte((v >> 8) & 0xFF)
+	out[2] = byte((v >> 16) & 0xFF)
+	out[3] = byte((v >> 24) & 0xFF)
+
+	return out[:]
+}
