@@ -1,8 +1,6 @@
 package main
 
 import (
-	"fmt"
-
 	"github.com/code-by-meal/go-rdp/log"
 	serverdata "github.com/code-by-meal/go-rdp/stack/rdp/server_data"
 	"github.com/code-by-meal/go-rdp/stack/sec"
@@ -16,13 +14,19 @@ var (
 )
 
 func main() {
-	sk := sec.NewSessionKey(EncryptMethod)
+	sk, err := sec.NewSessionKey(EncryptMethod, ClientRandom, ServerRandom)
+
+	if err != nil {
+		log.Err("Failed ", err)
+
+		return
+	}
 
 	log.Dbg("<s>Client Random:</>", ClientRandom)
 	log.Dbg("<s>Server Random:</>", ServerRandom)
 
-	if err := sk.Calc(ClientRandom, ServerRandom); err != nil {
-		fmt.Println("Error calculate session keys: ", err)
+	if err := sk.Calc(); err != nil {
+		log.Err("Error calculate session keys: ", err)
 
 		return
 	}
