@@ -2,6 +2,7 @@ package sec
 
 import (
 	"crypto/md5"
+	"crypto/rc4"
 	"crypto/sha1"
 	"fmt"
 
@@ -61,8 +62,69 @@ func NewSessionKey(encryptMethod serverdata.EncryptMethod, clientRandom, serverR
 	}, nil
 }
 
-func (s *SessionKeys) UpdateKey() error {
-	return fmt.Errorf("not implemented!")
+func (s *SessionKeys) UpdateKey(key, updateKey []byte) ([]byte, error) {
+	prefix := "sess key: update key: %w"
+
+	// SHA-1 digest
+	s1 := sha1.New()
+
+	for _, arr := range [][]byte{updateKey, s.Padding1, key} {
+		if _, err := s1.Write(arr); err != nil {
+			return []byte{}, fmt.Errorf(prefix, err)
+		}
+	}
+
+	// MD-5 digest
+	m5 := md5.New()
+
+	for _, arr := range [][]byte{updateKey, s.Padding2, s1.Sum(nil)} {
+		if _, err := m5.Write(arr); err != nil {
+			return []byte{}, fmt.Errorf(prefix, err)
+		}
+	}
+
+	copy(key, m5.Sum(nil)[:16])
+
+	// RC-4 encryption
+	ciph, err := rc4.NewCipher(key)
+
+	if err != nil {
+		return []byte{}, fmt.Errorf(prefix, err)
+	}
+
+	ciph.XORKeyStream(key, key)
+
+	switch s.EncryptMethod { // nolint
+	case serverdata.Four0BIT:
+		Copy(&key, &Salt, 3)
+	case serverdata.Five6BIT:
+		Copy(&key, &Salt, 1)
+	}
+
+	return key, nil
+}
+
+func (s *SessionKeys) Decrypt(data []byte) ([]byte, error) {
+	return []byte{}, nil
+}
+
+func (s *SessionKeys) Encrypt(data []byte) ([]byte, error) {
+	prefix := "ses key: encrypt: %w"
+
+	if s.EncryptUseCount >= 4096 {
+		key, err := s.UpdateKey(s.EncryptKey, s.UpdateEncryptKey)
+
+		if err != nil {
+			return []byte{}, fmt.Errorf(prefix, err)
+		}
+
+		s.EncryptKey = key
+	}
+
+	s.EncryptUseCount += 1
+	s.EncryptChecksumUseCount += 1
+
+	return []byte{}, nil
 }
 
 func (s *SessionKeys) SaltedMACSignature(data []byte) ([]byte, error) {
