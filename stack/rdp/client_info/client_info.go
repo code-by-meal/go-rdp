@@ -9,7 +9,6 @@ import (
 	"github.com/code-by-meal/go-rdp/core"
 	"github.com/code-by-meal/go-rdp/log"
 	"github.com/code-by-meal/go-rdp/stack/rdp/nego"
-	securitydata "github.com/code-by-meal/go-rdp/stack/rdp/security_data"
 	"github.com/code-by-meal/go-rdp/stack/sec"
 )
 
@@ -231,7 +230,7 @@ func NewRequest(
 	return r
 }
 
-func (r *Request) Write(stream io.Writer, proto nego.NegoProtocol, intiator uint16, sessionKeys *sec.SessionKey) error {
+func (r *Request) Write(stream io.Writer, proto nego.NegoProtocol, intiator uint16, sessionKeys *sec.SessionKeys) error {
 	prefix := "rdp: client-info: write: %w"
 
 	var buff bytes.Buffer
@@ -242,11 +241,11 @@ func (r *Request) Write(stream io.Writer, proto nego.NegoProtocol, intiator uint
 
 	switch proto { // nolint
 	case nego.RDP:
-		r := securitydata.NewRequest(0x0848)
-
-		if err := r.Write(stream, intiator, sessionKeys, buff.Bytes()); err != nil {
-			return fmt.Errorf(prefix, err)
-		}
+		// r := securitydata.NewRequest(0x0848)
+		//
+		// if err := r.Write(stream, intiator, sessionKeys, buff.Bytes()); err != nil {
+		// 	return fmt.Errorf(prefix, err)
+		// }
 	default:
 		return fmt.Errorf(prefix, fmt.Errorf("protocol %v are implemetned to proccess", proto))
 	}

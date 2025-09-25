@@ -12,10 +12,13 @@ import (
 	"github.com/code-by-meal/go-rdp/stack/rdp/nego"
 	securityexchange "github.com/code-by-meal/go-rdp/stack/rdp/security_exchange"
 	serverdata "github.com/code-by-meal/go-rdp/stack/rdp/server_data"
+	"github.com/code-by-meal/go-rdp/stack/sec"
 )
 
 func (c *Client) _SecureSettingExchange() error {
 	log.Zebra("[SECURE-SETTING-EXCHANGE]", log.SuccessColor)
+
+	prefix := "sec sett exchange: %w"
 
 	// Client info request
 	ip := c.Stream.Conn.LocalAddr().String()
@@ -29,7 +32,7 @@ func (c *Client) _SecureSettingExchange() error {
 	cir := clientinfo.NewRequest(ip, c.Domain, c.Username, c.Password)
 
 	if err := cir.Write(c.Stream, c.SelectedProtocol, c.UserID-uint16(mcs.UserIDBase), c.SessionKeys); err != nil {
-		return fmt.Errorf("sec sett exchange: %w", err)
+		return fmt.Errorf(prefix, err)
 	}
 
 	return nil
@@ -39,14 +42,24 @@ func (c *Client) _SecureSettingExchange() error {
 func (c *Client) _SecurityCommencement() error {
 	log.Zebra("[SECURITY-EXCHANGE-REQUEST]", log.SuccessColor)
 
+	prefix := "sec comm: write: %w"
+
 	// Send Data PDU
 	se := securityexchange.NewRequest()
 
 	if err := se.Write(c.Stream, c.UserID-uint16(mcs.UserIDBase), *c.ServerCertificate); err != nil {
-		return fmt.Errorf("sec comm: write: %w", err)
+		return fmt.Errorf(prefix, err)
 	}
 
 	c.ClientRandom = se.EncryptedClientRandom
+
+	log.Zebra("[SESSION-KEYS-ESTABLISHING]", log.SuccessColor)
+
+	c.SessionKeys = sec.NewSessionKey(c.EncryptMethod)
+
+	if err := c.SessionKeys.Calc(c.ClientRandom, c.ServerRandom); err != nil {
+		return fmt.Errorf(prefix, err)
+	}
 
 	return nil
 }

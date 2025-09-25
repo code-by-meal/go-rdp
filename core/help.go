@@ -7,3 +7,10 @@ func Reverse(arr []byte) []byte {
 
 	return arr
 }
+
+// Joining to byte slices
+func Join(a, b []byte) []byte {
+	a = append(a, b...)
+
+	return a
+}

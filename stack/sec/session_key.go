@@ -1,12 +1,8 @@
 package sec
 
 import (
-	"bytes"
-	"crypto/hmac"
 	"crypto/md5"
-	"crypto/rc4"
 	"crypto/sha1"
-	"encoding/binary"
 	"fmt"
 
 	serverdata "github.com/code-by-meal/go-rdp/stack/rdp/server_data"
@@ -18,135 +14,81 @@ var (
 	CC = []byte("CCC")
 )
 
-type SessionKey struct {
-	MAC8             [16]byte
-	ClientEncryptKey [8]byte
-	ClientDecryptKey [8]byte
-	RC4In            *rc4.Cipher
-	RC4Out           *rc4.Cipher
-	EncryptMethod    serverdata.EncryptMethod
+type SessionKeys struct {
+	EncryptMethod      serverdata.EncryptMethod
+	PreMasterSecretKey []byte // 48 bytes
+	MasterSecretKey    []byte // 48 bytes
+	SessionKeyBlob     []byte // 48 bytes
 }
 
-func NewSessionKey(encryptMethod serverdata.EncryptMethod) *SessionKey {
-	sk := SessionKey{
-		EncryptMethod: encryptMethod,
+func NewSessionKey(encryptMethod serverdata.EncryptMethod) *SessionKeys {
+	return &SessionKeys{
+		EncryptMethod:      encryptMethod,
+		PreMasterSecretKey: []byte{},
+		MasterSecretKey:    []byte{},
+		SessionKeyBlob:     []byte{},
 	}
-
-	return &sk
 }
 
-func (s *SessionKey) Calc(clientRandom, serverRandom []byte) error {
+func (s *SessionKeys) Calc(clientRandom, serverRandom []byte) error {
 	prefix := "sec: calc session key: %w"
 
 	if len(clientRandom) == 0 || len(serverRandom) == 0 {
 		return fmt.Errorf(prefix, fmt.Errorf("server or client rabdom is empty"))
 	}
 
-	master := _SSL3Gen(clientRandom, _Join(clientRandom, serverRandom))
+	return nil
+}
 
-	keyBlob := _SSL3Gen(master, _Join(serverRandom, clientRandom))
+func (s *SessionKeys) EstablishKeys() error {
+	prefix := "sess keys: establish keys: %w"
 
-	copy(s.MAC8[:], keyBlob[:16])
-	copy(s.ClientEncryptKey[:], keyBlob[16:32])
-	copy(s.ClientDecryptKey[:], keyBlob)
+	// Security A
 
-	switch s.EncryptMethod { // nolint
-	case serverdata.None | serverdata.One28BIT:
-		// skip
-	case serverdata.Four0BIT:
-		_Weaken56to40(s.ClientEncryptKey[:])
-		_Weaken56to40(s.ClientDecryptKey[:])
-	case serverdata.Five6BIT:
-		_WeakenTo56(s.ClientEncryptKey[:])
-		_WeakenTo56(s.ClientDecryptKey[:])
-	default:
-		return fmt.Errorf(prefix, fmt.Errorf("unknown encryption method: %v", s.EncryptMethod))
-	}
-
-	rcOut, err := rc4.NewCipher(s.ClientEncryptKey[:])
-
-	if err != nil {
-		return fmt.Errorf(prefix, err)
-	}
-
-	s.RC4Out = rcOut
-
-	rcIn, err := rc4.NewCipher(s.ClientDecryptKey[:])
-
-	if err != nil {
-		return fmt.Errorf(prefix, err)
-	}
-
-	s.RC4In = rcIn
+	// Security X
 
 	return nil
 }
 
-func _Join(a, b []byte) []byte {
-	t := []byte{}
+func (s *SessionKeys) SaltedHash(input, salt1, salt2, salt3 []byte) ([]byte, error) {
+	prefix := "sess keys: satl hash: %w"
+	empty := []byte{}
 
-	t = append(t, a...)
-	t = append(t, b...)
-
-	return t
-}
-
-func _SSL3Gen(secret, seed []byte) []byte {
-	out := make([]byte, 0, 48)
-
-	for i := 1; i <= 3; i++ {
-		label := bytes.Repeat([]byte{byte('A' - 1 + i)}, i)
-
-		h := sha1.New()
-		h.Write(label)
-		h.Write(secret)
-		h.Write(seed)
-		sha := h.Sum(nil) // 20B
-
-		m := md5.New()
-		m.Write(secret)
-		m.Write(sha)
-		out = append(out, m.Sum(nil)...) // 16B
+	if len(salt1) != 48 {
+		return empty, fmt.Errorf(prefix, fmt.Errorf("salt 1 must be 48 byte array (len=%d)", len(salt1)))
 	}
 
-	return out // 48B
-}
-
-func _WeakenTo56(k []byte) {
-	if len(k) < 16 {
-		return
+	if len(salt2) != 32 {
+		return empty, fmt.Errorf(prefix, fmt.Errorf("salt 2 must be 32 byte array (len=%d)", len(salt2)))
 	}
 
-	for i := 8; i < 16; i++ {
-		k[i] = 0
-	}
-}
-
-func _Weaken56to40(k []byte) {
-	if len(k) < 16 {
-		return
+	if len(salt3) != 32 {
+		return empty, fmt.Errorf(prefix, fmt.Errorf("salt 3 must be 32 byte array (len=%d)", len(salt1)))
 	}
 
-	for i := 5; i < 16; i++ {
-		k[i] = 0
+	// SHA-1 digest = SHA-1(INPUT + SALT1 + SALT2 + SALT3)
+	s1 := sha1.New()
+
+	for _, arr := range [][]byte{input, salt1, salt2, salt3} {
+		if _, err := s1.Write(arr); err != nil {
+			return empty, fmt.Errorf(prefix, err)
+		}
 	}
-}
 
-func MAC8(macKey []byte, seq uint32, data []byte) [8]byte {
-	var seqLE [4]byte
+	shaDigest := s1.Sum(nil)
 
-	binary.LittleEndian.PutUint32(seqLE[:], seq)
+	// MD-5 digest = MD5(SALT1 + SHA-1_DIGEST)
+	m5 := md5.New()
 
-	h := hmac.New(md5.New, macKey)
+	for _, arr := range [][]byte{salt1, shaDigest} {
+		if _, err := m5.Write(arr); err != nil {
+			return empty, fmt.Errorf(prefix, err)
+		}
+	}
 
-	h.Write(seqLE[:])
-	h.Write(data)
+	var hash [16]byte
 
-	sum := h.Sum(nil)
+	copy(hash[:], m5.Sum(nil))
 
-	var out [8]byte
-
-	copy(out[:], sum[:8])
-
-	return out
+	return hash[:], nil
 }

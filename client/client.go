@@ -31,7 +31,7 @@ type Client struct {
 	ServerCertificate *certs.Certificate
 	EncryptMethod     serverdata.EncryptMethod
 	EncryptLevel      serverdata.EncryptLevel
-	SessionKeys       *sec.SessionKey
+	SessionKeys       *sec.SessionKeys
 	ClientRandom      []byte
 	ServerRandom      []byte
 }
@@ -96,9 +96,9 @@ func (c *Client) Login(
 		}
 	}
 
-	if err := c._SecureSettingExchange(); err != nil {
-		return fmt.Errorf(prefix, err)
-	}
+	// if err := c._SecureSettingExchange(); err != nil {
+	// 	return fmt.Errorf(prefix, err)
+	// }
 
 	return nil
 }
